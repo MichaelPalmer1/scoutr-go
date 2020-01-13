@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
+	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
@@ -72,5 +73,10 @@ func main() {
 	records = utils.PostProcess(records, user)
 	out, err = json.Marshal(records)
 	fmt.Println(string(out))
+
+	filters := make(map[string]string)
+	filters["item__contains"] = "test"
+
+	filterbuilder.BuildFilter(user, filters)
 
 }
