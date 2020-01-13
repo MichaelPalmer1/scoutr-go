@@ -10,6 +10,9 @@ import (
 
 // GetUser : Get user data
 func GetUser(id string, authTable string, groupTable string, client *dynamodb.DynamoDB, userData map[string]string, groups []string) (*models.User, error) {
+	var user models.User
+
+	// Get the user from Dynamo
 	result, err := client.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(authTable),
 		Key: map[string]*dynamodb.AttributeValue{
@@ -20,13 +23,11 @@ func GetUser(id string, authTable string, groupTable string, client *dynamodb.Dy
 		fmt.Println("Failed to get user", err)
 		return nil, err
 	}
-
-	// fmt.Println(result)
-
-	var user models.User
+	
+	// Unmarshal result into User object
 	dynamodbattribute.UnmarshalMap(result.Item, &user)
 
-	fmt.Printf("endpoints %v\n", user)
+	// TODO: Handle groups
 
 	return &user, nil
 }

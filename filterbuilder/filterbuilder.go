@@ -14,6 +14,7 @@ import (
 func BuildFilter(user *models.User, filters map[string]string) (expression.Expression, error) {
 	var conditions expression.ConditionBuilder
 	initialized := false
+	re := regexp.MustCompile(`^(.+)__(in|contains|notcontains|startswith|ne|gt|lt|ge|le|between|exists)$`)
 
 	// Build user filters
 	for idx, item := range user.FilterFields {
@@ -45,10 +46,10 @@ func BuildFilter(user *models.User, filters map[string]string) (expression.Expre
 
 	// Build specified filters
 	for key, value := range filters {
-		fmt.Println(key, value)
-		re := regexp.MustCompile(`^(.+)__(in|contains|notcontains|startswith|ne|gt|lt|ge|le|between|exists)$`)
-		matches := re.FindAllStringSubmatch(key, -1)
 		var condition expression.ConditionBuilder
+
+		// Check for magic operator matches
+		matches := re.FindAllStringSubmatch(key, -1)
 		if len(matches) > 0 && len(matches[0]) == 3 {
 			key = matches[0][1]
 			operation := matches[0][2]
@@ -96,12 +97,6 @@ func BuildFilter(user *models.User, filters map[string]string) (expression.Expre
 		} else {
 			conditions = condition
 		}
-
 	}
-
-	expr, err := expression.NewBuilder().WithFilter(conditions).Build()
-	fmt.Println("Values:", expr.Values())
-	fmt.Println("Filter:", *expr.Filter())
-
-	return expr, err
+	return expression.NewBuilder().WithFilter(conditions).Build()
 }

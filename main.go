@@ -55,7 +55,6 @@ func main() {
 	// Compile filters
 	filters := make(map[string]string)
 	// filters["key"] = "42"
-	filters["name__notin"] = "[\"f6\"]"
 	conds, err := filterbuilder.BuildFilter(user, filters)
 
 	// Build scan input
@@ -67,22 +66,28 @@ func main() {
 		ExpressionAttributeValues: conds.Values(),
 	}
 
+	// Perform the scan
 	output, err := svc.Scan(input)
 	if err != nil {
 		fmt.Println("encountered error", err)
 		return
 	}
 
+	// Unmarshal output
 	records := []models.Record{}
 	err = dynamodbattribute.UnmarshalListOfMaps(output.Items, &records)
 	if err != nil {
 		panic(fmt.Sprintf("failed to unmarshal items, %v", err))
 	}
 
+	// show before
 	out, err := json.Marshal(records)
 	fmt.Println(string(out))
+
+	// Perform post-processing
 	records = utils.PostProcess(records, user)
+
+	// show after
 	out, err = json.Marshal(records)
 	fmt.Println(string(out))
-
 }
