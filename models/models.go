@@ -22,32 +22,32 @@ type Request struct {
 // PermittedEndpoint : An endpoint
 type PermittedEndpoint struct {
 	Endpoint string `json:"endpoint"`
-	Method string `json:"method"`
+	Method   string `json:"method"`
 }
 
 // FilterFields : Filter fields
 type FilterFields struct {
-	Field string `json:"field"`
+	Field string      `json:"field"`
 	Value interface{} `json:"value"`
 }
 
 // Group : Group object
 type Group struct {
-	ID string `json:"group_id"`
-	PermittedEndpoints []PermittedEndpoint `json:"permitted_endpoints"`
-	FilterFields []FilterFields `json:"filter_fields"`
-	ExcludeFields []string `json:"exclude_fields"`
-	UpdateFieldsPermitted []string `json:"update_fields_permitted"`
-	UpdateFieldsRestricted []string `json:"update_fields_restricted"`
+	ID                     string              `json:"group_id"`
+	PermittedEndpoints     []PermittedEndpoint `json:"permitted_endpoints"`
+	FilterFields           []FilterFields      `json:"filter_fields"`
+	ExcludeFields          []string            `json:"exclude_fields"`
+	UpdateFieldsPermitted  []string            `json:"update_fields_permitted"`
+	UpdateFieldsRestricted []string            `json:"update_fields_restricted"`
 }
 
 // User : User object
 type User struct {
-	ID string `json:"id"`
-	Groups []string `json:"groups"`
-	PermittedEndpoints []PermittedEndpoint `json:"permitted_endpoints"`
-	FilterFields []FilterFields `json:"filter_fields"`
-	ExcludeFields []string `json:"exclude_fields"`
-	UpdateFieldsPermitted []string `json:"update_fields_permitted"`
-	UpdateFieldsRestricted []string `json:"update_fields_restricted"`
+	ID                     string              `json:"id"`
+	Groups                 []string            `json:"groups"`
+	PermittedEndpoints     []PermittedEndpoint `json:"permitted_endpoints"`
+	FilterFields           []FilterFields      `json:"filter_fields"`
+	ExcludeFields          []string            `json:"exclude_fields"`
+	UpdateFieldsPermitted  []string            `json:"update_fields_permitted"`
+	UpdateFieldsRestricted []string            `json:"update_fields_restricted"`
 }
