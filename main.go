@@ -1,10 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"os/user"
+	"path/filepath"
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
+	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -14,15 +18,12 @@ import (
 )
 
 // Record : Item in Dynamo
-type Record struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
+type Record map[string]interface{}
 
 // Initialize - Creates connection to DynamoDB
 func Initialize(config *config.Config) *dynamodb.DynamoDB {
-	creds := credentials.NewSharedCredentials("/Users/michaelpalmer/.aws/credentials", "default")
+	usr, _ := user.Current()
+	creds := credentials.NewSharedCredentials(filepath.Join(usr.HomeDir, ".aws/credentials"), "default")
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region:      aws.String("us-east-1"),
 		Credentials: creds,
@@ -45,6 +46,11 @@ func main() {
 
 	svc := Initialize(&config)
 
+	user, err := utils.GetUser("michael", config.AuthTable, config.GroupTable, svc, nil, nil)
+	if err != nil {
+		panic(err)
+	}
+
 	input := &dynamodb.ScanInput{
 		TableName: aws.String(config.DataTable),
 	}
@@ -55,20 +61,16 @@ func main() {
 		return
 	}
 
-	records := []Record{}
-
+	records := []models.Record{}
 	err = dynamodbattribute.UnmarshalListOfMaps(output.Items, &records)
 	if err != nil {
 		panic(fmt.Sprintf("failed to unmarshal items, %v", err))
 	}
 
-	fmt.Println(records[0].Name)
-
-	results, err := utils.GetUser("michael", "auth", svc, nil, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(results)
+	out, err := json.Marshal(records)
+	fmt.Println(string(out))
+	records = utils.PostProcess(records, user)
+	out, err = json.Marshal(records)
+	fmt.Println(string(out))
 
 }
