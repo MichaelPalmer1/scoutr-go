@@ -52,8 +52,19 @@ func main() {
 		panic(err)
 	}
 
+	// Compile filters
+	filters := make(map[string]string)
+	// filters["key"] = "42"
+	filters["name__notin"] = "[\"f6\"]"
+	conds, err := filterbuilder.BuildFilter(user, filters)
+
+	// Build scan input
 	input := &dynamodb.ScanInput{
 		TableName: aws.String(config.DataTable),
+		FilterExpression: conds.Filter(),
+		ProjectionExpression: conds.Projection(),
+		ExpressionAttributeNames: conds.Names(),
+		ExpressionAttributeValues: conds.Values(),
 	}
 
 	output, err := svc.Scan(input)
@@ -73,10 +84,5 @@ func main() {
 	records = utils.PostProcess(records, user)
 	out, err = json.Marshal(records)
 	fmt.Println(string(out))
-
-	filters := make(map[string]string)
-	filters["item__contains"] = "test"
-
-	filterbuilder.BuildFilter(user, filters)
 
 }

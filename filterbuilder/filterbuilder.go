@@ -1,16 +1,19 @@
 package filterbuilder
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
 // BuildFilter : Build a filter
-func BuildFilter(user *models.User, filters map[string]string) *expression.ConditionBuilder {
+func BuildFilter(user *models.User, filters map[string]string) (expression.Expression, error) {
 	var conditions expression.ConditionBuilder
+	initialized := false
 
 	// Build user filters
 	for idx, item := range user.FilterFields {
@@ -18,6 +21,7 @@ func BuildFilter(user *models.User, filters map[string]string) *expression.Condi
 		if value, ok := item.Value.(string); ok {
 			// Value is a single string
 			condition := attr.Equal(expression.Value(value))
+			initialized = true
 			if idx == 0 {
 				conditions = condition
 			} else {
@@ -26,6 +30,7 @@ func BuildFilter(user *models.User, filters map[string]string) *expression.Condi
 		} else if value, ok := item.Value.([]interface{}); ok {
 			// Value is a list of strings
 			condition := attr.In(expression.Value(value))
+			initialized = true
 			if idx == 0 {
 				conditions = condition
 			} else {
@@ -39,18 +44,64 @@ func BuildFilter(user *models.User, filters map[string]string) *expression.Condi
 	}
 
 	// Build specified filters
-	// for _, item := range filters {
-	// 	item
-	// }
+	for key, value := range filters {
+		fmt.Println(key, value)
+		re := regexp.MustCompile(`^(.+)__(in|contains|notcontains|startswith|ne|gt|lt|ge|le|between|exists)$`)
+		matches := re.FindAllStringSubmatch(key, -1)
+		var condition expression.ConditionBuilder
+		if len(matches) > 0 && len(matches[0]) == 3 {
+			key = matches[0][1]
+			operation := matches[0][2]
+			attr := expression.Name(key)
 
-	expr, err := expression.NewBuilder().WithFilter(conditions).Build()
-	if err != nil {
-		fmt.Println("error building condition expression", err)
-		return nil
+			// Perform filter based on the desired magic operator
+			switch operation {
+			case "in":
+				var valueList []string
+				json.Unmarshal([]byte(value), &valueList)
+				condition = attr.In(expression.Value(valueList))
+			// case "notin":
+			// 	var valueList []string
+			// 	json.Unmarshal([]byte(value), &valueList)
+			// 	condition = expression.Not(attr.In(expression.Value(valueList)))
+			case "contains":
+				condition = attr.Contains(value)
+			case "notcontains":
+				condition = expression.Not(attr.Contains(value))
+			case "exists":
+				if value == "true" {
+					condition = attr.AttributeExists()
+				} else if value == "false" {
+					condition = attr.AttributeNotExists()
+				} else {
+					continue
+				}
+			case "startswith":
+				condition = attr.BeginsWith(value)
+			case "ne":
+				condition = attr.NotEqual(expression.Value(value))
+			case "between":
+				var valueList []string
+				json.Unmarshal([]byte(value), &valueList)
+				condition = attr.Between(expression.Value(valueList[0]), expression.Value(valueList[1]))
+			default:
+				panic("Unsupported magic operator")
+			}
+		} else {
+			condition = expression.Name(key).Equal(expression.Value(value))
+		}
+
+		if initialized {
+			conditions = conditions.And(condition)
+		} else {
+			conditions = condition
+		}
+
 	}
 
+	expr, err := expression.NewBuilder().WithFilter(conditions).Build()
 	fmt.Println("Values:", expr.Values())
 	fmt.Println("Filter:", *expr.Filter())
 
-	return &conditions
+	return expr, err
 }
