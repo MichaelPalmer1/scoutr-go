@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"errors"
 	"regexp"
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
@@ -40,11 +41,10 @@ func getUser(id string, userData interface{}, groups []string, client dynamodb.D
 	return &user
 }
 
-func validateUser(user *models.User) bool {
+func validateUser(user *models.User) error {
 	// Make sure the user contains the required keys
 	if user.ID == "" || user.Username == "" || user.Name == "" || user.Email == "" {
-		fmt.Println("User missing one of the following fields: id, username, name, email")
-		return false
+		return errors.New("User missing one of the following fields: id, username, name, email")
 	}
 
 	// TODO: Validate exclude fields
@@ -53,7 +53,7 @@ func validateUser(user *models.User) bool {
 
 	// TODO: Validate permitted endpoints
 
-	return true
+	return nil
 }
 
 func canAccessEndpoint(method string, path string, user *models.User) bool {
@@ -68,18 +68,18 @@ func canAccessEndpoint(method string, path string, user *models.User) bool {
 	return false
 }
 
-func validateRequest(req models.Request, user *models.User) bool {
+func validateRequest(req models.Request, user *models.User) (error) {
 	// Make sure the user has permissions to access this endpoint
 	if canAccessEndpoint(req.Method, req.Path, user) {
 		// TODO: Log request
 
 		// User is authorized to access this endpoint
-		return true
+		return nil
 	}
-
 	// User is not authorized
-	fmt.Println("No access to endpoint")
-	return false
+	return &models.Unauthorized{
+		fmt.Sprintf("Not authorized to perform %s on endpoint %s", req.Method, req.Path),
+	}
 }
 
 // InitializeRequest : Initialize the request
@@ -93,13 +93,13 @@ func InitializeRequest(req models.Request, client dynamodb.DynamoDB) *models.Use
 
 	user := getUser(req.User.ID, userData, groups, client)
 
-	if !validateUser(user) {
-		fmt.Println("INVALID USER")
+	if err := validateUser(user); err != nil {
+		fmt.Println("Bad User:", err)
 		return nil
 	}
 
-	if !validateRequest(req, user) {
-		fmt.Println("INVALID REQUEST")
+	if err := validateRequest(req, user); err != nil {
+		fmt.Println("Unauthorized:", err)
 		return nil
 	}
 
