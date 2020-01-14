@@ -78,7 +78,7 @@ func validateRequest(req models.Request, user *models.User) (error) {
 	}
 	// User is not authorized
 	return &models.Unauthorized{
-		fmt.Sprintf("Not authorized to perform %s on endpoint %s", req.Method, req.Path),
+		Message: fmt.Sprintf("Not authorized to perform %s on endpoint %s", req.Method, req.Path),
 	}
 }
 
