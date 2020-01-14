@@ -16,7 +16,10 @@ type RequestUser struct {
 
 // Request : simple request
 type Request struct {
-	User RequestUser
+	User   RequestUser
+	Method string
+	Path   string
+	Body   interface{}
 }
 
 // PermittedEndpoint : An endpoint
@@ -44,6 +47,9 @@ type Group struct {
 // User : User object
 type User struct {
 	ID                     string              `json:"id"`
+	Username               string              `json:"username"`
+	Name                   string              `json:"name"`
+	Email                  string              `json:"email"`
 	Groups                 []string            `json:"groups"`
 	PermittedEndpoints     []PermittedEndpoint `json:"permitted_endpoints"`
 	FilterFields           []FilterFields      `json:"filter_fields"`

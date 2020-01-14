@@ -32,7 +32,11 @@ func scan(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.Record
 // ListTable : Lists all items in a table
 func (api *SimpleAPI) ListTable(req models.Request, uniqueKey string, pathParams map[string]string, queryParams map[string]string) []models.Record {
 	// Get the user
-	user := utils.InitializeRequest(req)
+	user := utils.InitializeRequest(req, *api.Client)
+	if user == nil {
+		fmt.Println("BAD USER")
+		return nil
+	}
 
 	input := dynamodb.ScanInput{
 		TableName: aws.String(api.DataTable),
@@ -54,7 +58,7 @@ func (api *SimpleAPI) ListTable(req models.Request, uniqueKey string, pathParams
 	}
 
 	// Build filters
-	conditions, err := filterbuilder.Filter(&user, queryParams)
+	conditions, err := filterbuilder.Filter(user, queryParams)
 
 	// Update scan input
 	input.FilterExpression = conditions.Filter()
@@ -72,7 +76,7 @@ func (api *SimpleAPI) ListTable(req models.Request, uniqueKey string, pathParams
 	// Filter the response
 	fmt.Println(user)
 	fmt.Println(data)
-	filteredData := utils.PostProcess(data, &user)
+	filteredData := utils.PostProcess(data, user)
 	fmt.Println(filteredData)
 
 	// Sort the response if unique key was specified

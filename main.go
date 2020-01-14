@@ -51,6 +51,8 @@ func main() {
 
 	request := models.Request{
 		User: requestUser,
+		Method: "GET",
+		Path: "/items",
 	}
 
 	pathParams := make(map[string]string)
