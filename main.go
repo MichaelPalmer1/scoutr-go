@@ -8,14 +8,12 @@ import (
 	"path/filepath"
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
-	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
+	"github.com/MichaelPalmer1/simple-api-go/endpoints"
 	"github.com/MichaelPalmer1/simple-api-go/models"
-	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
 // Record : Item in Dynamo
@@ -47,47 +45,24 @@ func main() {
 
 	svc := Initialize(&config)
 
-	user, err := utils.GetUser("michael", config.AuthTable, config.GroupTable, svc, nil, nil)
-	if err != nil {
-		panic(err)
+	requestUser := models.RequestUser{
+		ID: "michael",
 	}
 
-	// Compile filters
-	filters := make(map[string]string)
-	// filters["key"] = "42"
-	conds, err := filterbuilder.BuildFilter(user, filters)
-
-	// Build scan input
-	input := &dynamodb.ScanInput{
-		TableName: aws.String(config.DataTable),
-		FilterExpression: conds.Filter(),
-		ProjectionExpression: conds.Projection(),
-		ExpressionAttributeNames: conds.Names(),
-		ExpressionAttributeValues: conds.Values(),
+	request := models.Request{
+		User: requestUser,
 	}
 
-	// Perform the scan
-	output, err := svc.Scan(input)
-	if err != nil {
-		fmt.Println("encountered error", err)
-		return
+	pathParams := make(map[string]string)
+	queryParams := make(map[string]string)
+
+	api := endpoints.SimpleAPI{
+		DataTable: config.DataTable,
+		Client: svc,
 	}
 
-	// Unmarshal output
-	records := []models.Record{}
-	err = dynamodbattribute.UnmarshalListOfMaps(output.Items, &records)
-	if err != nil {
-		panic(fmt.Sprintf("failed to unmarshal items, %v", err))
-	}
+	data := api.ListTable(request, "", pathParams, queryParams)
 
-	// show before
-	out, err := json.Marshal(records)
-	fmt.Println(string(out))
-
-	// Perform post-processing
-	records = utils.PostProcess(records, user)
-
-	// show after
-	out, err = json.Marshal(records)
+	out, _ := json.Marshal(data)
 	fmt.Println(string(out))
 }

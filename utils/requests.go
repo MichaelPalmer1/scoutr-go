@@ -1,9 +1,31 @@
 package utils
 
-import "github.com/MichaelPalmer1/simple-api-go/models"
+import (
+	"fmt"
 
-func getUser(id string, userData interface{}, groups []string) models.User {
+	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+)
+
+func getUser(id string, userData interface{}, groups []string, client dynamodb.DynamoDB) *models.User {
 	user := models.User{}
+
+	input := dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {S: aws.String(id)},
+		},
+		TableName: aws.String("auth"),
+	}
+
+	result, err := client.GetItem(&input)
+	if err != nil {
+		fmt.Println("error", err)
+		return nil
+	}
+
+	result.
+
 
 	return user
 }

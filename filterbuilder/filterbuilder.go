@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
-// BuildFilter : Build a filter
-func BuildFilter(user *models.User, filters map[string]string) (expression.Expression, error) {
+// Filter : Build a filter
+func Filter(user *models.User, filters map[string]string) (expression.Expression, error) {
 	var conditions expression.ConditionBuilder
 	initialized := false
 	re := regexp.MustCompile(`^(.+)__(in|contains|notcontains|startswith|ne|gt|lt|ge|le|between|exists)$`)
