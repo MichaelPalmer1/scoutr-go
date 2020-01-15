@@ -11,7 +11,7 @@ type RequestUserData struct {
 // RequestUser : User object
 type RequestUser struct {
 	ID   string `json:"id"`
-	Data interface{}
+	Data *UserData
 }
 
 // Request : simple request
@@ -56,4 +56,12 @@ type User struct {
 	ExcludeFields          []string            `json:"exclude_fields"`
 	UpdateFieldsPermitted  []string            `json:"update_fields_permitted"`
 	UpdateFieldsRestricted []string            `json:"update_fields_restricted"`
+}
+
+// UserData : User data object
+type UserData struct {
+	Username string   `json:"username"`
+	Name     string   `json:"name"`
+	Email    string   `json:"email"`
+	Groups   []string `json:"groups"`
 }

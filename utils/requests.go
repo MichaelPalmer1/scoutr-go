@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 	"regexp"
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
@@ -68,7 +68,7 @@ func canAccessEndpoint(method string, path string, user *models.User) bool {
 	return false
 }
 
-func validateRequest(req models.Request, user *models.User) (error) {
+func validateRequest(req models.Request, user *models.User) error {
 	// Make sure the user has permissions to access this endpoint
 	if canAccessEndpoint(req.Method, req.Path, user) {
 		// TODO: Log request
@@ -84,14 +84,21 @@ func validateRequest(req models.Request, user *models.User) (error) {
 
 // InitializeRequest : Initialize the request
 func InitializeRequest(req models.Request, client dynamodb.DynamoDB) (*models.User, error) {
-	var userData interface{}
+	var userData *models.UserData
 	var groups []string
 
 	if req.User.Data != nil {
 		userData = req.User.Data
 	}
 
-	user := getUser(req.User.ID, userData, groups, client)
+	user, err := GetUser(req.User.ID, "auth", "groups", client, userData, groups)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("user", user)
+
+	// user := getUser(req.User.ID, userData, groups, client)
 
 	if err := validateUser(user); err != nil {
 		fmt.Println("Bad User:", err)
