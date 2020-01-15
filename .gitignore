@@ -1,3 +1,4 @@
 simple-api-go
 .vs-code/
 __debug_bin
+vendor/
