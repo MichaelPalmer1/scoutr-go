@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/user"
 	"path/filepath"
+	"strings"
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
 	"github.com/MichaelPalmer1/simple-api-go/endpoints"
@@ -58,7 +59,7 @@ func httpHandler(w http.ResponseWriter, req *http.Request) {
 		}
 	} else if req.Method == "POST" || req.Method == "PUT" {
 		// Parse the request body if this is a POST/PUT
-		var body map[string]interface{}
+		var body interface{}
 		err := json.NewDecoder(req.Body).Decode(&body)
 		if err != nil {
 			if err.Error() == "EOF" {
@@ -94,6 +95,62 @@ func httpHandler(w http.ResponseWriter, req *http.Request) {
 	w.Write(out)
 }
 
+func search(w http.ResponseWriter, req *http.Request) {
+	// Return method not allowed for all non-POST requests
+	if req.Method != "POST" {
+		http.Error(w, "", http.StatusMethodNotAllowed)
+		return
+	}
+
+	requestUser := models.RequestUser{
+		ID: "michael",
+	}
+
+	// Parse the request body if this is a POST/PUT
+	var body []string
+	err := json.NewDecoder(req.Body).Decode(&body)
+	if err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	// Build the request model
+	request := models.Request{
+		User:   requestUser,
+		Method: req.Method,
+		Path:   req.URL.Path,
+		Body:   body,
+	}
+
+	// Make sure the URL is formatted as /search/{key}
+	pathParts := strings.Split(req.URL.Path, "/")
+	if len(pathParts) != 3 {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+
+	// Search the table
+	data, err := api.Search(request, pathParts[2], body)
+
+	// Check for errors in the response
+	if err != nil {
+		switch err.(type) {
+		case *models.Unauthorized:
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+		case *models.BadRequest:
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		default:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Marshal the response and write it to output
+	out, _ := json.Marshal(data)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(out)
+}
+
 func main() {
 	// Command line arguments
 	var config config.Config
@@ -109,5 +166,6 @@ func main() {
 	api.Client = svc
 
 	http.HandleFunc("/", httpHandler)
+	http.HandleFunc("/search/", search)
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }

@@ -11,7 +11,7 @@ import (
 )
 
 // Filter : Build a filter
-func Filter(user *models.User, filters map[string]string) (expression.Expression, error) {
+func Filter(user *models.User, filters map[string]string) (expression.ConditionBuilder, bool) {
 	var conditions expression.ConditionBuilder
 	initialized := false
 	re := regexp.MustCompile(`^(.+)__(in|contains|notcontains|startswith|ne|gt|lt|ge|le|between|exists)$`)
@@ -46,7 +46,7 @@ func Filter(user *models.User, filters map[string]string) (expression.Expression
 
 	// Build specified filters
 	for key, value := range filters {
-		var condition expression.ConditionBuilder
+		condition := expression.ConditionBuilder{}
 
 		// Check for magic operator matches
 		matches := re.FindAllStringSubmatch(key, -1)
@@ -98,5 +98,24 @@ func Filter(user *models.User, filters map[string]string) (expression.Expression
 			conditions = condition
 		}
 	}
-	return expression.NewBuilder().WithFilter(conditions).Build()
+
+	return conditions, len(user.FilterFields) > 0 || len(filters) > 0
+}
+
+// MultiFilter : Perform a filter with multiple values
+func MultiFilter(user *models.User, key string, values []string) expression.ConditionBuilder {
+	conditions, hasValues := Filter(user, nil)
+
+	// Build the condition
+	fmt.Println("key", key)
+	fmt.Println("values", values)
+	condition := expression.Name(key).In(expression.Value(values))
+
+	if hasValues {
+		conditions = conditions.And(condition)
+	} else {
+		conditions = condition
+	}
+
+	return conditions
 }
