@@ -6,40 +6,8 @@ import (
 	"regexp"
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
-
-func getUser(id string, userData interface{}, groups []string, client dynamodb.DynamoDB) *models.User {
-	user := models.User{}
-
-	// Build input to search for user
-	input := dynamodb.GetItemInput{
-		Key: map[string]*dynamodb.AttributeValue{
-			"id": {S: aws.String(id)},
-		},
-		TableName: aws.String("auth"),
-	}
-
-	// Look up the user
-	result, err := client.GetItem(&input)
-	if err != nil {
-		fmt.Println("error", err)
-		return nil
-	}
-
-	// Check for a result
-	if len(result.Item) == 0 {
-		fmt.Println("no user found")
-		return nil
-	}
-
-	// Unmarshal the result
-	dynamodbattribute.UnmarshalMap(result.Item, &user)
-
-	return &user
-}
 
 func validateUser(user *models.User) error {
 	// Make sure the user contains the required keys
@@ -95,10 +63,6 @@ func InitializeRequest(req models.Request, client dynamodb.DynamoDB) (*models.Us
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("user", user)
-
-	// user := getUser(req.User.ID, userData, groups, client)
 
 	if err := validateUser(user); err != nil {
 		fmt.Println("Bad User:", err)
