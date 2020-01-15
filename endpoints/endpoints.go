@@ -30,12 +30,12 @@ func scan(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.Record
 }
 
 // ListTable : Lists all items in a table
-func (api *SimpleAPI) ListTable(req models.Request, uniqueKey string, pathParams map[string]string, queryParams map[string]string) []models.Record {
+func (api *SimpleAPI) ListTable(req models.Request, uniqueKey string, pathParams map[string]string, queryParams map[string]string) ([]models.Record, error) {
 	// Get the user
-	user := utils.InitializeRequest(req, *api.Client)
-	if user == nil {
-		fmt.Println("BAD USER")
-		return nil
+	user, err := utils.InitializeRequest(req, *api.Client)
+	if err != nil {
+		// Bad user - pass the error through
+		return nil, err
 	}
 
 	input := dynamodb.ScanInput{
@@ -70,7 +70,7 @@ func (api *SimpleAPI) ListTable(req models.Request, uniqueKey string, pathParams
 	data, err := scan(&input, api.Client)
 	if err != nil {
 		fmt.Println("Error while attempting to list records", err)
-		return nil
+		return nil, nil
 	}
 
 	// Filter the response
@@ -85,5 +85,5 @@ func (api *SimpleAPI) ListTable(req models.Request, uniqueKey string, pathParams
 	// Create audit log
 	utils.AuditLog()
 
-	return data
+	return data, nil
 }

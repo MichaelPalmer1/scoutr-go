@@ -8,3 +8,12 @@ type Unauthorized struct {
 func (e *Unauthorized) Error() string {
 	return e.Message
 }
+
+// BadRequest : User submitted a bad request
+type BadRequest struct {
+	Message string
+}
+
+func (e *BadRequest) Error() string {
+	return e.Message
+}

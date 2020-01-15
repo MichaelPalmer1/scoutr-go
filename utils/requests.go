@@ -83,7 +83,7 @@ func validateRequest(req models.Request, user *models.User) (error) {
 }
 
 // InitializeRequest : Initialize the request
-func InitializeRequest(req models.Request, client dynamodb.DynamoDB) *models.User {
+func InitializeRequest(req models.Request, client dynamodb.DynamoDB) (*models.User, error) {
 	var userData interface{}
 	var groups []string
 
@@ -95,13 +95,13 @@ func InitializeRequest(req models.Request, client dynamodb.DynamoDB) *models.Use
 
 	if err := validateUser(user); err != nil {
 		fmt.Println("Bad User:", err)
-		return nil
+		return nil, err
 	}
 
 	if err := validateRequest(req, user); err != nil {
 		fmt.Println("Unauthorized:", err)
-		return nil
+		return nil, err
 	}
 
-	return user
+	return user, nil
 }
