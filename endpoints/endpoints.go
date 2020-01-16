@@ -20,6 +20,7 @@ func scan(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.Record
 
 	records := []models.Record{}
 	dynamodbattribute.UnmarshalListOfMaps(results.Items, &records)
+	
 
 	return records, nil
 }

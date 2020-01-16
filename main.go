@@ -159,6 +159,67 @@ func search(w http.ResponseWriter, req *http.Request) {
 	w.Write(out)
 }
 
+func create(w http.ResponseWriter, req *http.Request) {
+	// Return method not allowed for all non-POST requests
+	if req.Method != "POST" {
+		http.Error(w, "", http.StatusMethodNotAllowed)
+		return
+	}
+
+	requestUser := models.RequestUser{
+		ID: "michael",
+	}
+
+	// Parse the request body if this is a POST/PUT
+	var body map[string]string
+	err := json.NewDecoder(req.Body).Decode(&body)
+	if err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	// Build the request model
+	request := models.Request{
+		User:   requestUser,
+		Method: req.Method,
+		Path:   req.URL.Path,
+		Body:   body,
+	}
+
+	validation := make(map[string]endpoints.FieldValidation)
+
+	validation["value"] = func(value string, item map[string]string, existingItem map[string]string) (bool, string, error) {
+		if value != "hello" {
+			return false, "Invalid value", nil
+		}
+
+		return true, "", nil
+	}
+
+	// Create the item
+	data, err := api.Create(request, body, validation)
+
+	// Check for errors in the response
+	if err != nil {
+		switch err.(type) {
+		case *models.Unauthorized:
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+		case *models.BadRequest:
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		case *dynamodb.ConditionalCheckFailedException:
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		default:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Marshal the response and write it to output
+	out, _ := json.Marshal(data)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(out)
+}
+
 func main() {
 	// Command line arguments
 	var config config.Config
@@ -174,6 +235,7 @@ func main() {
 	api.Client = svc
 
 	http.HandleFunc("/", httpHandler)
+	http.HandleFunc("/create", create)
 	http.HandleFunc("/search/", search)
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
