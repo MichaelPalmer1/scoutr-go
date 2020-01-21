@@ -1,9 +1,7 @@
 package endpoints
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
 	"github.com/MichaelPalmer1/simple-api-go/models"
@@ -14,38 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
-// FieldValidation : Callable
-type FieldValidation func(value string, item map[string]string, existingItem map[string]string) (bool, string, error)
-
-func validateFields(validation map[string]FieldValidation, item map[string]string, existingItem map[string]string, ignoreFieldPresence bool) error {
-	// Check for required fields
-	if !ignoreFieldPresence {
-		var missingKeys []string
-		for key := range validation {
-			if _, ok := item[key]; !ok {
-				missingKeys = append(missingKeys, key)
-			}
-		}
-		if len(missingKeys) > 0 {
-			return errors.New("Missing required fields: " + strings.Join(missingKeys, ", "))
-		}
-	}
-
-	for key, fn := range validation {
-		if _, ok := item[key]; ok {
-			success, message, err := fn(item[key], item, existingItem)
-			if err != nil {
-				return err
-			} else if !success {
-				return errors.New(message)
-			}
-		}
-	}
-	return nil
-}
-
 // Create : Create an item
-func (api *SimpleAPI) Create(req models.Request, item map[string]string, validation map[string]FieldValidation) (bool, error) {
+func (api *SimpleAPI) Create(req models.Request, item map[string]string, validation map[string]utils.FieldValidation) (bool, error) {
 	// Get the user
 	user, err := utils.InitializeRequest(req, *api.Client)
 	if err != nil {
@@ -56,7 +24,7 @@ func (api *SimpleAPI) Create(req models.Request, item map[string]string, validat
 	// Run data validation
 	if validation != nil {
 		fmt.Println("Running field validation")
-		err := validateFields(validation, item, nil, false)
+		err := utils.ValidateFields(validation, item, nil, false)
 		if err != nil {
 			fmt.Println("Field validation error", err)
 			return false, err

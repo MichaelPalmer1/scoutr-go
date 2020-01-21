@@ -13,7 +13,7 @@ import (
 )
 
 // Update : Update an item
-func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string, item map[string]string, validation map[string]FieldValidation) (interface{}, error) {
+func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string, item map[string]string, validation map[string]utils.FieldValidation) (interface{}, error) {
 	var output interface{}
 
 	// Get the user
@@ -26,7 +26,7 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 	// Run data validation
 	if validation != nil {
 		fmt.Println("Running field validation")
-		err := validateFields(validation, item, nil, true)
+		err := utils.ValidateFields(validation, item, nil, true)
 		if err != nil {
 			fmt.Println("Field validation error", err)
 			return nil, err

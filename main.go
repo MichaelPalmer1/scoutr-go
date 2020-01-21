@@ -13,6 +13,7 @@ import (
 	"github.com/MichaelPalmer1/simple-api-go/config"
 	"github.com/MichaelPalmer1/simple-api-go/endpoints"
 	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -27,7 +28,7 @@ var api endpoints.SimpleAPI
 // Initialize - Creates connection to DynamoDB
 func Initialize(config *config.Config) *dynamodb.DynamoDB {
 	usr, _ := user.Current()
-	
+
 	creds := credentials.NewSharedCredentials(filepath.Join(usr.HomeDir, ".aws/credentials"), "default")
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region:      aws.String("us-east-1"),
@@ -188,14 +189,14 @@ func create(w http.ResponseWriter, req *http.Request) {
 		Body:   body,
 	}
 
-	validation := make(map[string]endpoints.FieldValidation)
+	validation := map[string]utils.FieldValidation{
+		"value": func(value string, item map[string]string, existingItem map[string]string) (bool, string, error) {
+			if value != "hello" {
+				return false, "Invalid value", nil
+			}
 
-	validation["value"] = func(value string, item map[string]string, existingItem map[string]string) (bool, string, error) {
-		if value != "hello" {
-			return false, "Invalid value", nil
-		}
-
-		return true, "", nil
+			return true, "", nil
+		},
 	}
 
 	// Create the item
@@ -249,7 +250,7 @@ func update(w http.ResponseWriter, req *http.Request) {
 		Body:   body,
 	}
 
-	validation := make(map[string]endpoints.FieldValidation)
+	validation := make(map[string]utils.FieldValidation)
 
 	validation["value"] = func(value string, item map[string]string, existingItem map[string]string) (bool, string, error) {
 		if value != "hello" {
@@ -294,8 +295,6 @@ func update(w http.ResponseWriter, req *http.Request) {
 		case *models.Unauthorized:
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 		case *models.BadRequest:
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		case *dynamodb.ConditionalCheckFailedException:
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		default:
 			http.Error(w, err.Error(), http.StatusInternalServerError)
