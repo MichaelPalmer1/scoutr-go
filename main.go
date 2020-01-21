@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os/user"
@@ -26,6 +27,7 @@ var api endpoints.SimpleAPI
 // Initialize - Creates connection to DynamoDB
 func Initialize(config *config.Config) *dynamodb.DynamoDB {
 	usr, _ := user.Current()
+	
 	creds := credentials.NewSharedCredentials(filepath.Join(usr.HomeDir, ".aws/credentials"), "default")
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region:      aws.String("us-east-1"),
@@ -257,10 +259,33 @@ func update(w http.ResponseWriter, req *http.Request) {
 		return true, "", nil
 	}
 
-	// Update the item
-	partitionKey := map[string]string{
-		"id": "test123",
+	// Make sure the URL is formatted as /search/{key}
+	pathParts := strings.Split(req.URL.Path, "/")
+	if len(pathParts) != 3 {
+		http.Error(w, "", http.StatusNotFound)
+		return
 	}
+
+	// Get key schema
+	tableInfo, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
+		TableName: aws.String(api.DataTable),
+	})
+	if err != nil {
+		fmt.Println("Failed to describe table", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Build partition key
+	partitionKey := make(map[string]string)
+	for _, schema := range tableInfo.Table.KeySchema {
+		if *schema.KeyType == "HASH" {
+			partitionKey[*schema.AttributeName] = pathParts[2]
+			break
+		}
+	}
+
+	// Update the item
 	data, err := api.Update(request, partitionKey, body, validation)
 
 	// Check for errors in the response
@@ -300,7 +325,7 @@ func main() {
 
 	http.HandleFunc("/", httpHandler)
 	http.HandleFunc("/create", create)
-	http.HandleFunc("/update", update)
+	http.HandleFunc("/update/", update)
 	http.HandleFunc("/search/", search)
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }

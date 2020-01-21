@@ -108,7 +108,7 @@ func (api *SimpleAPI) Create(req models.Request, item map[string]string, validat
 		return false, err
 	}
 
-	// Update scan input
+	// Update input
 	input.ConditionExpression = expr.Condition()
 	input.ExpressionAttributeNames = expr.Names()
 	input.ExpressionAttributeValues = expr.Values()
