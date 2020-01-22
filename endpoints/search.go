@@ -44,14 +44,9 @@ func (api *SimpleAPI) Search(req models.Request, key string, values []string) ([
 	}
 
 	// Filter the response
-	fmt.Println(user)
-	fmt.Println(data)
-	filteredData := utils.PostProcess(data, user)
-	fmt.Println(filteredData)
+	utils.PostProcess(data, user)
 
-	// Sort the response if unique key was specified
-
-	// Create audit log
+	// TODO: Create audit log
 	utils.AuditLog()
 
 	return data, nil

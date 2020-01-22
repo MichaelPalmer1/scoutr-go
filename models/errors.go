@@ -17,3 +17,12 @@ type BadRequest struct {
 func (e *BadRequest) Error() string {
 	return e.Message
 }
+
+// NotFound : Item does not exist
+type NotFound struct {
+	Message string
+}
+
+func (e *NotFound) Error() string {
+	return e.Message
+}
