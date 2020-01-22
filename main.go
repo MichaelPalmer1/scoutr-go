@@ -190,7 +190,7 @@ func main() {
 	}
 
 	// Add get/create/update endpoints
-	router.POST("/items/", create)
+	router.POST("/item/", create)
 	router.GET("/item/:id", get)
 	router.PUT("/item/:id", update)
 
