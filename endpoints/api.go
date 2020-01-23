@@ -40,33 +40,30 @@ func scan(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.Record
 
 // CanAccessEndpoint : Check whether a user has permission to access an endpoint
 func (api *SimpleAPI) CanAccessEndpoint(method string, path string, user *models.User, request *models.Request) bool {
-	var usr *models.User
 	var err error
 	if request != nil {
 		// Fetch the user
-		usr, err = utils.GetUser(request.User.ID, api.Config.AuthTable, api.Config.GroupTable, *api.Client, request.User.Data, []string{})
+		user, err = utils.GetUser(request.User.ID, api.Config.AuthTable, api.Config.GroupTable, *api.Client, request.User.Data, []string{})
 		if err != nil {
 			fmt.Println("Failed to fetch user", err)
 			return false
 		}
 
 		// Validate the user
-		err = api.validateUser(usr)
+		err = api.validateUser(user)
 		if err != nil {
 			fmt.Println("Encountered error while validating user", err)
 			return false
 		}
-	} else {
-		usr = user
 	}
 
 	// Verify user was provided/looked up
-	if usr == nil {
+	if user == nil {
 		fmt.Println("ERROR: Unable to validate if user has access to endpoint because user was nil")
 		return false
 	}
 
-	for _, item := range usr.PermittedEndpoints {
+	for _, item := range user.PermittedEndpoints {
 		if method == item.Method {
 			re := regexp.MustCompile(item.Endpoint)
 			if re.MatchString(path) {
