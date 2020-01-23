@@ -31,7 +31,7 @@ func init() {
 	validation = map[string]utils.FieldValidation{
 		"value": func(value string, item map[string]string, existingItem map[string]string) (bool, string, error) {
 			if value != "hello" {
-				return false, "Invalid value", nil
+				return false, fmt.Sprintf("Invalid value '%s' for attribute 'value'", value), nil
 			}
 
 			return true, "", nil
@@ -76,7 +76,7 @@ func create(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	}
 
 	// Create the item
-	data, err := api.Create(request, body, validation)
+	err = api.Create(request, body, validation)
 
 	// Check for errors in the response
 	if httpserver.HTTPErrorHandler(err, w) {
@@ -84,7 +84,9 @@ func create(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	}
 
 	// Marshal the response and write it to output
-	out, _ := json.Marshal(data)
+	out, _ := json.Marshal(map[string]bool{
+		"created": true,
+	})
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(out)
 }
@@ -138,7 +140,7 @@ func update(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 
 	// Get key schema
 	tableInfo, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
-		TableName: aws.String(api.DataTable),
+		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
 		fmt.Println("Failed to describe table", err)
@@ -180,8 +182,8 @@ func main() {
 	flag.Parse()
 
 	svc := Initialize(&config)
-	api.DataTable = config.DataTable
 	api.Client = svc
+	api.Config = config
 
 	// Initialize http server
 	router, err := httpserver.InitHTTPServer(api, "id", "/items/", []string{"CREATE", "UPDATE"})

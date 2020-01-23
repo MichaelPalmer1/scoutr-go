@@ -14,14 +14,14 @@ import (
 // Search : Search items in the table
 func (api *SimpleAPI) Search(req models.Request, key string, values []string) ([]models.Record, error) {
 	// Get the user
-	user, err := utils.InitializeRequest(req, *api.Client)
+	user, err := api.initializeRequest(req, *api.Client)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err
 	}
 
 	input := dynamodb.ScanInput{
-		TableName: aws.String(api.DataTable),
+		TableName: aws.String(api.Config.DataTable),
 	}
 
 	// Build filters

@@ -17,7 +17,7 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 	var output interface{}
 
 	// Get the user
-	user, err := utils.InitializeRequest(req, *api.Client)
+	user, err := api.initializeRequest(req, *api.Client)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err
@@ -47,7 +47,7 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 
 	// Build input
 	input := dynamodb.UpdateItemInput{
-		TableName:    aws.String(api.DataTable),
+		TableName:    aws.String(api.Config.DataTable),
 		ReturnValues: aws.String("ALL_NEW"),
 	}
 
@@ -65,7 +65,7 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 
 	// Get key schema
 	keySchema, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
-		TableName: aws.String(api.DataTable),
+		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
 		fmt.Println("Failed to describe table", err)

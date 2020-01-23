@@ -12,6 +12,11 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+type userAccess struct {
+	Method string `json:"method"`
+	Path   string `json:"path"`
+}
+
 // HTTPErrorHandler : Handle HTTP errors
 func HTTPErrorHandler(err error, w http.ResponseWriter) bool {
 	if err != nil {
@@ -146,6 +151,53 @@ func InitHTTPServer(api endpoints.SimpleAPI, partitionKey string, primaryListEnd
 		w.Write(data)
 	}
 
+	userHasPermission := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		userData := models.UserData{
+			Name:     req.Header.Get("Oidc-Claim-Name"),
+			Email:    req.Header.Get("Oidc-Claim-Mail"),
+			Username: req.Header.Get("Oidc-Claim-Sub"),
+		}
+
+		requestUser := models.RequestUser{
+			ID:   req.Header.Get("Oidc-Claim-Sub"),
+			Data: &userData,
+		}
+
+		// Build the request model
+		request := models.Request{
+			User:   requestUser,
+			Method: req.Method,
+			Path:   req.URL.Path,
+		}
+		_ = request
+
+		// Parse the request body
+		access := userAccess{}
+		err := json.NewDecoder(req.Body).Decode(&access)
+		if err != nil {
+			http.Error(w, "Invalid request", http.StatusBadRequest)
+			return
+		}
+
+		// Check for authorization and save to output object
+		output := map[string]bool{
+			"authorized": api.CanAccessEndpoint(access.Method, access.Path, nil, &request),
+		}
+
+		// Marshal data and write to output
+		data, err := json.Marshal(output)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Set content type
+		w.Header().Set("Content-Type", "application/json")
+
+		// Write output
+		w.Write(data)
+	}
+
 	audit := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 
 	}
@@ -158,6 +210,7 @@ func InitHTTPServer(api endpoints.SimpleAPI, partitionKey string, primaryListEnd
 	router := httprouter.New()
 	router.GET(primaryListEndpoint, list)
 	router.GET("/user/", userInfo)
+	router.POST("/user/has-permission/", userHasPermission)
 	router.GET("/audit/", audit)
 	router.GET("/audit/:item/", audit)
 	router.GET("/history/:item/", history)

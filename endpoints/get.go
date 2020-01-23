@@ -16,7 +16,7 @@ func (api *SimpleAPI) Get(req models.Request, id string) (models.Record, error) 
 	var partitionKey string
 
 	// Get the user
-	user, err := utils.InitializeRequest(req, *api.Client)
+	user, err := api.initializeRequest(req, *api.Client)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err
@@ -24,7 +24,7 @@ func (api *SimpleAPI) Get(req models.Request, id string) (models.Record, error) 
 
 	// Lookup the partition key
 	tableInfo, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
-		TableName: aws.String(api.DataTable),
+		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
 		fmt.Println("Failed to describe table", err)
@@ -56,7 +56,7 @@ func (api *SimpleAPI) Get(req models.Request, id string) (models.Record, error) 
 
 	// Build scan input
 	input := dynamodb.ScanInput{
-		TableName:                 aws.String(api.DataTable),
+		TableName:                 aws.String(api.Config.DataTable),
 		FilterExpression:          expr.Filter(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
