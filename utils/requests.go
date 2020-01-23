@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 
@@ -12,7 +11,9 @@ import (
 func validateUser(user *models.User) error {
 	// Make sure the user contains the required keys
 	if user.ID == "" || user.Username == "" || user.Name == "" || user.Email == "" {
-		return errors.New("User missing one of the following fields: id, username, name, email")
+		return &models.Unauthorized{
+			Message: "User missing one of the following fields: id, username, name, email",
+		}
 	}
 
 	// TODO: Validate exclude fields

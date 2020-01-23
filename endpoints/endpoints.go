@@ -13,14 +13,22 @@ type SimpleAPI struct {
 }
 
 func scan(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.Record, error) {
-	results, err := client.Scan(input)
+	results := []models.Record{}
+	err := client.ScanPages(input,
+		func(page *dynamodb.ScanOutput, lastPage bool) bool {
+			// Unmarshal data into Record model
+			records := []models.Record{}
+			dynamodbattribute.UnmarshalListOfMaps(page.Items, &records)
+
+			// Append to output
+			results = append(results, records...)
+
+			return true
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	records := []models.Record{}
-	dynamodbattribute.UnmarshalListOfMaps(results.Items, &records)
-	
-
-	return records, nil
+	return results, nil
 }
