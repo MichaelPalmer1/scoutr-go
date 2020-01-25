@@ -22,6 +22,7 @@ type Request struct {
 	Body        interface{}
 	SourceIP    string
 	UserAgent   string
+	PathParams  map[string]string
 	QueryParams map[string]string
 }
 

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/MichaelPalmer1/simple-api-go/simpleapi"
 	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/MichaelPalmer1/simple-api-go/simpleapi"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -80,13 +80,14 @@ func InitHTTPServer(api simpleapi.SimpleAPI, partitionKey string, primaryListEnd
 			User:        requestUser,
 			Method:      req.Method,
 			Path:        req.URL.Path,
+			PathParams:  pathParams,
 			QueryParams: queryParams,
 			SourceIP:    req.RemoteAddr,
 			UserAgent:   req.UserAgent(),
 		}
 
 		// List the table
-		data, err := api.ListTable(request, "", pathParams, queryParams)
+		data, err := api.ListTable(request)
 
 		// Check for errors in the response
 		if HTTPErrorHandler(err, w) {
