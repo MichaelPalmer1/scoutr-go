@@ -7,7 +7,7 @@ import (
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // Filter : Build a filter
@@ -38,8 +38,8 @@ func Filter(user *models.User, filters map[string]string) (expression.ConditionB
 				conditions = conditions.And(condition)
 			}
 		} else {
-			logrus.Warnln("Received value of unknown type", item.Value)
-			logrus.Warnln("Type", reflect.TypeOf(item.Value))
+			log.Warnln("Received value of unknown type", item.Value)
+			log.Warnln("Type", reflect.TypeOf(item.Value))
 			continue
 		}
 	}
