@@ -130,12 +130,12 @@ func (api *SimpleAPI) initializeRequest(req models.Request, client dynamodb.Dyna
 	}
 
 	if err := api.validateUser(user); err != nil {
-		log.Warnln("Bad User:", err)
+		log.Warnln("[%s] Bad User - %s", api.userIdentifier(user), err)
 		return nil, err
 	}
 
 	if err := api.validateRequest(req, user); err != nil {
-		log.Warnln("Unauthorized:", err)
+		log.Warnf("[%s] %s", api.userIdentifier(user), err)
 		return nil, err
 	}
 
