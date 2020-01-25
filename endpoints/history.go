@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"errors"
 	"sort"
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
@@ -55,6 +56,10 @@ func (api *SimpleAPI) History(req models.Request, key string, value string, quer
 			currentItem.Data = item.Body.(map[string]interface{})
 			break
 		}
+	}
+
+	if currentItem.Time == "" {
+		return history, errors.New("Failed to find initial creation record")
 	}
 
 	// Make a copy of the original record
