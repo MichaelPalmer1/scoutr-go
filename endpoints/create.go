@@ -56,15 +56,17 @@ func (api *SimpleAPI) Create(req models.Request, item map[string]string, validat
 	conditions, hasConditions := filterbuilder.Filter(user, nil)
 
 	// Append key schema conditions
-	if !hasConditions {
-		for _, schema := range output.Table.KeySchema {
-			condition := expression.Name(*schema.AttributeName).AttributeNotExists()
-			if !hasConditions {
-				conditions = condition
-				hasConditions = true
-			} else {
-				conditions = conditions.And(condition)
-			}
+	partitionKey := ""
+	for _, schema := range output.Table.KeySchema {
+		if *schema.KeyType == "HASH" {
+			partitionKey = *schema.AttributeName
+		}
+		condition := expression.Name(*schema.AttributeName).AttributeNotExists()
+		if !hasConditions {
+			conditions = condition
+			hasConditions = true
+		} else {
+			conditions = conditions.And(condition)
 		}
 	}
 
@@ -96,7 +98,7 @@ func (api *SimpleAPI) Create(req models.Request, item map[string]string, validat
 	}
 
 	// Create audit log
-	api.auditLog("CREATE", req, *user, nil, nil)
+	api.auditLog("CREATE", req, *user, &map[string]string{partitionKey: item[partitionKey]}, nil)
 
 	return nil
 }
