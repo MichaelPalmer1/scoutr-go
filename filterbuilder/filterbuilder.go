@@ -96,6 +96,7 @@ func Filter(user *models.User, filters map[string]string) (expression.ConditionB
 			conditions = conditions.And(condition)
 		} else {
 			conditions = condition
+			initialized = true
 		}
 	}
 
