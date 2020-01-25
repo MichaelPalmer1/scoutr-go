@@ -87,6 +87,14 @@ func Filter(user *models.User, filters map[string]string) (expression.ConditionB
 				var valueList []string
 				json.Unmarshal([]byte(value), &valueList)
 				condition = attr.Between(expression.Value(valueList[0]), expression.Value(valueList[1]))
+			case "gt":
+				condition = attr.GreaterThan(expression.Value(value))
+			case "lt":
+				condition = attr.LessThan(expression.Value(value))
+			case "ge":
+				condition = attr.GreaterThanEqual(expression.Value(value))
+			case "le":
+				condition = attr.LessThanEqual(expression.Value(value))
 			default:
 				panic("Unsupported magic operator")
 			}
