@@ -16,10 +16,13 @@ type RequestUser struct {
 
 // Request : simple request
 type Request struct {
-	User   RequestUser
-	Method string
-	Path   string
-	Body   interface{}
+	User        RequestUser
+	Method      string
+	Path        string
+	Body        interface{}
+	SourceIP    string
+	UserAgent   string
+	QueryParams map[string]string
 }
 
 // PermittedEndpoint : An endpoint
@@ -58,10 +61,33 @@ type User struct {
 	UpdateFieldsRestricted []string            `json:"update_fields_restricted"`
 }
 
+// AuditUser : User object used in audit logs
+type AuditUser struct {
+	ID        string `json:"id"`
+	Username  string `json:"username"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	SourceIP  string `json:"source_ip,omitempty"`
+	UserAgent string `json:"user_agent,omitempty"`
+}
+
 // UserData : User data object
 type UserData struct {
 	Username string   `json:"username"`
 	Name     string   `json:"name"`
 	Email    string   `json:"email"`
 	Groups   []string `json:"groups"`
+}
+
+// AuditLog : Audit log object
+type AuditLog struct {
+	Time        string            `json:"time"`
+	User        AuditUser         `json:"user"`
+	Action      string            `json:"action"`
+	Method      string            `json:"method"`
+	Path        string            `json:"path"`
+	ExpireTime  int64             `json:"expire_time,omitempty"`
+	QueryParams map[string]string `json:"query_params,omitempty"`
+	Resource    map[string]string `json:"resource,omitempty"`
+	Body        interface{}       `json:"body,omitempty"`
 }

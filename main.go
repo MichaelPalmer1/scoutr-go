@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os/user"
 	"path/filepath"
@@ -19,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
 )
 
 // Record : Item in Dynamo
@@ -69,10 +69,12 @@ func create(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 
 	// Build the request model
 	request := models.Request{
-		User:   requestUser,
-		Method: req.Method,
-		Path:   req.URL.Path,
-		Body:   body,
+		User:      requestUser,
+		Method:    req.Method,
+		Path:      req.URL.Path,
+		Body:      body,
+		SourceIP:  req.RemoteAddr,
+		UserAgent: req.UserAgent(),
 	}
 
 	// Create the item
@@ -98,9 +100,11 @@ func get(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 
 	// Build the request model
 	request := models.Request{
-		User:   requestUser,
-		Method: req.Method,
-		Path:   req.URL.Path,
+		User:      requestUser,
+		Method:    req.Method,
+		Path:      req.URL.Path,
+		SourceIP:  req.RemoteAddr,
+		UserAgent: req.UserAgent(),
 	}
 
 	// Fetch the item
@@ -132,10 +136,12 @@ func update(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 
 	// Build the request model
 	request := models.Request{
-		User:   requestUser,
-		Method: req.Method,
-		Path:   req.URL.Path,
-		Body:   body,
+		User:      requestUser,
+		Method:    req.Method,
+		Path:      req.URL.Path,
+		Body:      body,
+		SourceIP:  req.RemoteAddr,
+		UserAgent: req.UserAgent(),
 	}
 
 	// Get key schema
@@ -143,7 +149,7 @@ func update(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
-		fmt.Println("Failed to describe table", err)
+		log.Errorln("Failed to describe table", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -158,7 +164,7 @@ func update(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	}
 
 	// Update the item
-	data, err := api.Update(request, partitionKey, body, validation)
+	data, err := api.Update(request, partitionKey, body, validation, "UPDATE")
 
 	// Check for errors in the response
 	if httpserver.HTTPErrorHandler(err, w) {

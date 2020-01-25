@@ -2,12 +2,12 @@ package filterbuilder
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"regexp"
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/sirupsen/logrus"
 )
 
 // Filter : Build a filter
@@ -38,8 +38,8 @@ func Filter(user *models.User, filters map[string]string) (expression.ConditionB
 				conditions = conditions.And(condition)
 			}
 		} else {
-			fmt.Println("what's this", item.Value)
-			fmt.Println(reflect.TypeOf(item.Value))
+			logrus.Warnln("Received value of unknown type", item.Value)
+			logrus.Warnln("Type", reflect.TypeOf(item.Value))
 			continue
 		}
 	}
@@ -107,8 +107,6 @@ func MultiFilter(user *models.User, key string, values []string) expression.Cond
 	conditions, hasValues := Filter(user, nil)
 
 	// Build the condition
-	fmt.Println("key", key)
-	fmt.Println("values", values)
 	condition := expression.Name(key).In(expression.Value(values))
 
 	if hasValues {

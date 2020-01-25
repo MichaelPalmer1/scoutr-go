@@ -1,8 +1,6 @@
 package endpoints
 
 import (
-	"fmt"
-
 	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
@@ -10,10 +8,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	log "github.com/sirupsen/logrus"
 )
 
 // Update : Update an item
-func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string, item map[string]string, validation map[string]utils.FieldValidation) (interface{}, error) {
+func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string, item map[string]string, validation map[string]utils.FieldValidation, auditAction string) (interface{}, error) {
 	var output interface{}
 
 	// Get the user
@@ -25,10 +24,10 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 
 	// Run data validation
 	if validation != nil {
-		fmt.Println("Running field validation")
+		log.Infoln("Running field validation")
 		err := utils.ValidateFields(validation, item, nil, true)
 		if err != nil {
-			fmt.Println("Field validation error", err)
+			log.Errorln("Field validation error", err)
 			return nil, err
 		}
 	}
@@ -54,7 +53,7 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 	// Build partition key
 	dynamoKeyParts, err := dynamodbattribute.MarshalMap(partitionKey)
 	if err != nil {
-		fmt.Println("Failed to marshal partition key", err)
+		log.Errorln("Failed to marshal partition key", err)
 		return nil, err
 	}
 	input.Key = dynamoKeyParts
@@ -68,7 +67,7 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
-		fmt.Println("Failed to describe table", err)
+		log.Errorln("Failed to describe table", err)
 		return nil, err
 	}
 
@@ -87,7 +86,7 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 	if hasConditions {
 		expr, err = expression.NewBuilder().WithCondition(conditions).WithUpdate(updateConds).Build()
 		if err != nil {
-			fmt.Println("Encountered error while building expression", err)
+			log.Errorln("Encountered error while building expression", err)
 			return nil, err
 		}
 
@@ -96,7 +95,7 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 	} else {
 		expr, err = expression.NewBuilder().WithUpdate(updateConds).Build()
 		if err != nil {
-			fmt.Println("Encountered error while building expression", err)
+			log.Errorln("Encountered error while building expression", err)
 			return nil, err
 		}
 	}
@@ -109,7 +108,7 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 	// Update the item in dynamo
 	updatedItem, err := api.Client.UpdateItem(&input)
 	if err != nil {
-		fmt.Println("Error while attempting to update item in dynamo", err)
+		log.Errorln("Error while attempting to update item in dynamo", err)
 
 		// Check if this was a conditional check failure
 		if _, ok := err.(*dynamodb.ConditionalCheckFailedException); ok {
@@ -125,7 +124,7 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 	dynamodbattribute.UnmarshalMap(updatedItem.Attributes, &output)
 
 	// Create audit log
-	utils.AuditLog()
+	api.auditLog("UPDATE", req, *user, &partitionKey, &item)
 
 	return output, nil
 }

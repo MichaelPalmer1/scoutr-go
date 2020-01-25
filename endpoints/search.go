@@ -1,14 +1,13 @@
 package endpoints
 
 import (
-	"fmt"
-
 	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	log "github.com/sirupsen/logrus"
 )
 
 // Search : Search items in the table
@@ -28,7 +27,7 @@ func (api *SimpleAPI) Search(req models.Request, key string, values []string) ([
 	conditions := filterbuilder.MultiFilter(user, key, values)
 	expr, err := expression.NewBuilder().WithFilter(conditions).Build()
 	if err != nil {
-		fmt.Println("Failed to build expression", err)
+		log.Errorln("Failed to build expression", err)
 	}
 
 	// Update scan input
@@ -39,15 +38,15 @@ func (api *SimpleAPI) Search(req models.Request, key string, values []string) ([
 	// Download the data
 	data, err := scan(&input, api.Client)
 	if err != nil {
-		fmt.Println("Error while attempting to list records", err)
+		log.Errorln("Error while attempting to list records", err)
 		return nil, nil
 	}
 
 	// Filter the response
 	utils.PostProcess(data, user)
 
-	// TODO: Create audit log
-	utils.AuditLog()
+	// Create audit log
+	api.auditLog("SEARCH", req, *user, nil, nil)
 
 	return data, nil
 }

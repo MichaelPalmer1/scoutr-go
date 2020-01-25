@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	log "github.com/sirupsen/logrus"
 )
 
 // GetUser : Get user data
@@ -22,7 +23,7 @@ func GetUser(id string, authTable string, groupTable string, client dynamodb.Dyn
 		},
 	})
 	if err != nil {
-		fmt.Println("Failed to get user", err)
+		log.Errorln("Failed to get user", err)
 		return nil, err
 	} else if result.Item == nil {
 		// Failed to find user in the table
@@ -43,7 +44,7 @@ func GetUser(id string, authTable string, groupTable string, client dynamodb.Dyn
 			},
 		})
 		if err != nil {
-			fmt.Println("Failed to get group", err)
+			log.Errorln("Failed to get group", err)
 			return nil, err
 		} else if result.Item == nil {
 			// Group is not in the table
@@ -104,7 +105,7 @@ func GetUser(id string, authTable string, groupTable string, client dynamodb.Dyn
 			},
 		})
 		if err != nil {
-			fmt.Println("Failed to get group", err)
+			log.Errorln("Failed to get group", err)
 			return nil, err
 		} else if result.Item == nil {
 			// Group is not in the table

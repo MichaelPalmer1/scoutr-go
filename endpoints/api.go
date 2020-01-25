@@ -9,6 +9,7 @@ import (
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	log "github.com/sirupsen/logrus"
 )
 
 // SimpleAPI : Class
@@ -45,21 +46,21 @@ func (api *SimpleAPI) CanAccessEndpoint(method string, path string, user *models
 		// Fetch the user
 		user, err = utils.GetUser(request.User.ID, api.Config.AuthTable, api.Config.GroupTable, *api.Client, request.User.Data, []string{})
 		if err != nil {
-			fmt.Println("Failed to fetch user", err)
+			log.Errorln("Failed to fetch user", err)
 			return false
 		}
 
 		// Validate the user
 		err = api.validateUser(user)
 		if err != nil {
-			fmt.Println("Encountered error while validating user", err)
+			log.Println("Encountered error while validating user", err)
 			return false
 		}
 	}
 
 	// Verify user was provided/looked up
 	if user == nil {
-		fmt.Println("ERROR: Unable to validate if user has access to endpoint because user was nil")
+		log.Println("Unable to validate if user has access to endpoint because user was nil")
 		return false
 	}
 
@@ -91,10 +92,19 @@ func (api *SimpleAPI) validateUser(user *models.User) error {
 	return nil
 }
 
+func (api *SimpleAPI) userIdentifier(user *models.User) string {
+	return fmt.Sprintf("%s: %s (%s - %s)", user.ID, user.Name, user.Username, user.Email)
+}
+
 func (api *SimpleAPI) validateRequest(req models.Request, user *models.User) error {
 	// Make sure the user has permissions to access this endpoint
 	if api.CanAccessEndpoint(req.Method, req.Path, user, nil) {
-		// TODO: Log request
+		// Log request
+		if req.Method == "GET" {
+			log.Infof("[%s] Performed %s on %s", api.userIdentifier(user), req.Method, req.Path)
+		} else {
+			log.Infof("[%s] Performed %s on %s:\n%s", api.userIdentifier(user), req.Method, req.Path, req.Body)
+		}
 
 		// User is authorized to access this endpoint
 		return nil
@@ -120,12 +130,12 @@ func (api *SimpleAPI) initializeRequest(req models.Request, client dynamodb.Dyna
 	}
 
 	if err := api.validateUser(user); err != nil {
-		fmt.Println("Bad User:", err)
+		log.Warnln("Bad User:", err)
 		return nil, err
 	}
 
 	if err := api.validateRequest(req, user); err != nil {
-		fmt.Println("Unauthorized:", err)
+		log.Warnln("Unauthorized:", err)
 		return nil, err
 	}
 

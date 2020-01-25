@@ -3,7 +3,6 @@ package httpserver
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -66,16 +65,19 @@ func InitHTTPServer(api endpoints.SimpleAPI, partitionKey string, primaryListEnd
 			Data: &userData,
 		}
 
-		// Build the request model
-		request := models.Request{
-			User:   requestUser,
-			Method: req.Method,
-			Path:   req.URL.Path,
-		}
-
 		// Parse query params
 		for key, values := range req.URL.Query() {
 			queryParams[key] = values[0]
+		}
+
+		// Build the request model
+		request := models.Request{
+			User:        requestUser,
+			Method:      req.Method,
+			Path:        req.URL.Path,
+			QueryParams: queryParams,
+			SourceIP:    req.RemoteAddr,
+			UserAgent:   req.UserAgent(),
 		}
 
 		// List the table
@@ -93,8 +95,6 @@ func InitHTTPServer(api endpoints.SimpleAPI, partitionKey string, primaryListEnd
 	}
 
 	search := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		fmt.Println("search keys", params.ByName("key"))
-
 		requestUser := models.RequestUser{
 			ID: "michael",
 		}
@@ -109,10 +109,12 @@ func InitHTTPServer(api endpoints.SimpleAPI, partitionKey string, primaryListEnd
 
 		// Build the request model
 		request := models.Request{
-			User:   requestUser,
-			Method: req.Method,
-			Path:   req.URL.Path,
-			Body:   body,
+			User:      requestUser,
+			Method:    req.Method,
+			Path:      req.URL.Path,
+			Body:      body,
+			SourceIP:  req.RemoteAddr,
+			UserAgent: req.UserAgent(),
 		}
 
 		// Search the table

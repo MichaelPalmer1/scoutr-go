@@ -1,14 +1,13 @@
 package endpoints
 
 import (
-	"fmt"
-
 	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	log "github.com/sirupsen/logrus"
 )
 
 // Get : Get an item from the table
@@ -27,7 +26,7 @@ func (api *SimpleAPI) Get(req models.Request, id string) (models.Record, error) 
 		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
-		fmt.Println("Failed to describe table", err)
+		log.Errorln("Failed to describe table", err)
 		return nil, err
 	}
 
@@ -65,7 +64,7 @@ func (api *SimpleAPI) Get(req models.Request, id string) (models.Record, error) 
 	// Download the data
 	data, err := scan(&input, api.Client)
 	if err != nil {
-		fmt.Println("Error while attempting to list records", err)
+		log.Errorln("Error while attempting to list records", err)
 		return nil, nil
 	}
 
@@ -83,8 +82,8 @@ func (api *SimpleAPI) Get(req models.Request, id string) (models.Record, error) 
 		}
 	}
 
-	// TODO: Create audit log
-	utils.AuditLog()
+	// Create audit log
+	api.auditLog("GET", req, *user, &map[string]string{partitionKey: id}, nil)
 
 	return data[0], nil
 }

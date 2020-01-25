@@ -1,8 +1,6 @@
 package endpoints
 
 import (
-	"fmt"
-
 	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
@@ -10,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	log "github.com/sirupsen/logrus"
 )
 
 // Create : Create an item
@@ -23,10 +22,10 @@ func (api *SimpleAPI) Create(req models.Request, item map[string]string, validat
 
 	// Run data validation
 	if validation != nil {
-		fmt.Println("Running field validation")
+		log.Infoln("Running field validation")
 		err := utils.ValidateFields(validation, item, nil, false)
 		if err != nil {
-			fmt.Println("Field validation error", err)
+			log.Errorln("Field validation error", err)
 			return err
 		}
 	}
@@ -34,7 +33,7 @@ func (api *SimpleAPI) Create(req models.Request, item map[string]string, validat
 	// Marshal item into a dynamo map
 	data, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {
-		fmt.Println("Failed to marshal data", err)
+		log.Errorln("Failed to marshal data", err)
 		return err
 	}
 
@@ -49,7 +48,7 @@ func (api *SimpleAPI) Create(req models.Request, item map[string]string, validat
 		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
-		fmt.Println("Failed to describe table", err)
+		log.Errorln("Failed to describe table", err)
 		return err
 	}
 
@@ -72,7 +71,7 @@ func (api *SimpleAPI) Create(req models.Request, item map[string]string, validat
 	// Build expression
 	expr, err := expression.NewBuilder().WithCondition(conditions).Build()
 	if err != nil {
-		fmt.Println("Encountered error while building expression", err)
+		log.Errorln("Encountered error while building expression", err)
 		return err
 	}
 
@@ -84,7 +83,7 @@ func (api *SimpleAPI) Create(req models.Request, item map[string]string, validat
 	// Put the item into dynamo
 	_, err = api.Client.PutItem(&input)
 	if err != nil {
-		fmt.Println("Error while attempting to add item to dynamo", err)
+		log.Errorln("Error while attempting to add item to dynamo", err)
 
 		// Check if this was a conditional check failure
 		if _, ok := err.(*dynamodb.ConditionalCheckFailedException); ok {
@@ -97,7 +96,7 @@ func (api *SimpleAPI) Create(req models.Request, item map[string]string, validat
 	}
 
 	// Create audit log
-	utils.AuditLog()
+	api.auditLog("CREATE", req, *user, nil, nil)
 
 	return nil
 }

@@ -1,14 +1,13 @@
 package endpoints
 
 import (
-	"fmt"
-
 	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	log "github.com/sirupsen/logrus"
 )
 
 // ListTable : Lists all items in a table
@@ -56,7 +55,7 @@ func (api *SimpleAPI) ListTable(req models.Request, uniqueKey string, pathParams
 	// Download the data
 	data, err := scan(&input, api.Client)
 	if err != nil {
-		fmt.Println("Error while attempting to list records", err)
+		log.Errorln("Error while attempting to list records", err)
 		return nil, nil
 	}
 
@@ -65,8 +64,8 @@ func (api *SimpleAPI) ListTable(req models.Request, uniqueKey string, pathParams
 
 	// TODO: Sort the response if unique key was specified
 
-	// TODO: Create audit log
-	utils.AuditLog()
+	// Create audit log
+	api.auditLog("LIST", req, *user, nil, nil)
 
 	return data, nil
 }
