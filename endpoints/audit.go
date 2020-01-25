@@ -3,12 +3,73 @@ package endpoints
 import (
 	"time"
 
+	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	log "github.com/sirupsen/logrus"
 )
+
+// ListAuditLogs : List audit logs
+func (api *SimpleAPI) ListAuditLogs(req models.Request, pathParams map[string]string, queryParams map[string]string) ([]models.Record, error) {
+	// Only fetch audit logs if the table is configured
+	if api.Config.AuditTable == "" {
+		return nil, &models.NotFound{
+			Message: "Audit logs are not enabled",
+		}
+	}
+
+	// Get the user
+	user, err := api.initializeRequest(req, *api.Client)
+	if err != nil {
+		// Bad user - pass the error through
+		return nil, err
+	}
+
+	input := dynamodb.ScanInput{
+		TableName: aws.String(api.Config.AuditTable),
+	}
+
+	// Generate dynamic search
+	searchKey, hasSearchKey := pathParams["search_key"]
+	searchValue, hasSearchValue := pathParams["search_value"]
+	if hasSearchKey && hasSearchValue {
+		// Map the search key and value into path params
+		pathParams[searchKey] = searchValue
+		delete(pathParams, "search_key")
+		delete(pathParams, "search_value")
+	}
+
+	// Merge pathParams into queryParams
+	for key, value := range pathParams {
+		queryParams[key] = value
+	}
+
+	// Build filters
+	conditions, hasConditions := filterbuilder.Filter(user, queryParams)
+	if hasConditions {
+		expr, err := expression.NewBuilder().WithFilter(conditions).Build()
+		if err != nil {
+			return nil, err
+		}
+
+		// Update scan input
+		input.FilterExpression = expr.Filter()
+		input.ExpressionAttributeNames = expr.Names()
+		input.ExpressionAttributeValues = expr.Values()
+	}
+
+	// Download the data
+	data, err := scan(&input, api.Client)
+	if err != nil {
+		log.Errorln("Error while attempting to list records", err)
+		return nil, nil
+	}
+
+	return data, nil
+}
 
 // AuditLog : Creates an audit log
 func (api *SimpleAPI) auditLog(action string, request models.Request, user models.User, resource *map[string]string, changes *map[string]string) error {

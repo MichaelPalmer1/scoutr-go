@@ -70,6 +70,11 @@ func InitHTTPServer(api endpoints.SimpleAPI, partitionKey string, primaryListEnd
 			queryParams[key] = values[0]
 		}
 
+		// Parse path params
+		for _, item := range params {
+			pathParams[item.Key] = item.Value
+		}
+
 		// Build the request model
 		request := models.Request{
 			User:        requestUser,
@@ -201,7 +206,53 @@ func InitHTTPServer(api endpoints.SimpleAPI, partitionKey string, primaryListEnd
 	}
 
 	audit := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		pathParams := make(map[string]string)
+		queryParams := make(map[string]string)
 
+		userData := models.UserData{
+			Name:     "Michael",
+			Email:    "Michael@Palmer.com",
+			Username: "michael",
+			Groups:   []string{"group1", "group2"},
+		}
+
+		requestUser := models.RequestUser{
+			ID:   "michael",
+			Data: &userData,
+		}
+
+		// Parse query params
+		for key, values := range req.URL.Query() {
+			queryParams[key] = values[0]
+		}
+
+		// Parse path params
+		for _, item := range params {
+			pathParams[item.Key] = item.Value
+		}
+
+		// Build the request model
+		request := models.Request{
+			User:        requestUser,
+			Method:      req.Method,
+			Path:        req.URL.Path,
+			QueryParams: queryParams,
+			SourceIP:    req.RemoteAddr,
+			UserAgent:   req.UserAgent(),
+		}
+
+		// List the table
+		data, err := api.ListAuditLogs(request, pathParams, queryParams)
+
+		// Check for errors in the response
+		if HTTPErrorHandler(err, w) {
+			return
+		}
+
+		// Marshal the response and write it to output
+		out, _ := json.Marshal(data)
+		w.Header().Add("Content-Type", "application/json")
+		w.Write(out)
 	}
 
 	history := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
@@ -211,6 +262,7 @@ func InitHTTPServer(api endpoints.SimpleAPI, partitionKey string, primaryListEnd
 	// Create routes
 	router := httprouter.New()
 	router.GET(primaryListEndpoint, list)
+	router.GET(primaryListEndpoint+":search_key/:search_value/", list)
 	router.GET("/user/", userInfo)
 	router.POST("/user/has-permission/", userHasPermission)
 	router.GET("/audit/", audit)
