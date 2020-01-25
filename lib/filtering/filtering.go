@@ -1,4 +1,4 @@
-package filterbuilder
+package filtering
 
 import (
 	"encoding/json"

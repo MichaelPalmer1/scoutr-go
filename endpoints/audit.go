@@ -3,7 +3,7 @@ package endpoints
 import (
 	"time"
 
-	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
+	"github.com/MichaelPalmer1/simple-api-go/lib/filtering"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -48,7 +48,7 @@ func (api *SimpleAPI) ListAuditLogs(req models.Request, pathParams map[string]st
 	}
 
 	// Build filters
-	conditions, hasConditions := filterbuilder.Filter(nil, queryParams)
+	conditions, hasConditions := filtering.Filter(nil, queryParams)
 	if hasConditions {
 		expr, err := expression.NewBuilder().WithFilter(conditions).Build()
 		if err != nil {

@@ -1,7 +1,7 @@
 package endpoints
 
 import (
-	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
+	"github.com/MichaelPalmer1/simple-api-go/lib/filtering"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
@@ -39,7 +39,7 @@ func (api *SimpleAPI) Get(req models.Request, id string) (models.Record, error) 
 	}
 
 	// Build filters
-	conditions, hasConditions := filterbuilder.Filter(user, map[string]string{})
+	conditions, hasConditions := filtering.Filter(user, map[string]string{})
 	keyCondition := expression.Name(partitionKey).Equal(expression.Value(id))
 	if hasConditions {
 		conditions = conditions.And(keyCondition)

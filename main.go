@@ -10,7 +10,7 @@ import (
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
 	"github.com/MichaelPalmer1/simple-api-go/endpoints"
-	"github.com/MichaelPalmer1/simple-api-go/httpserver"
+	"github.com/MichaelPalmer1/simple-api-go/lib/httpserver"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"

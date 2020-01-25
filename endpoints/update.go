@@ -1,7 +1,7 @@
 package endpoints
 
 import (
-	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
+	"github.com/MichaelPalmer1/simple-api-go/lib/filtering"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
@@ -60,7 +60,7 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 
 	// Build filters
 	var expr expression.Expression
-	conditions, hasConditions := filterbuilder.Filter(user, nil)
+	conditions, hasConditions := filtering.Filter(user, nil)
 
 	// Get key schema
 	keySchema, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{

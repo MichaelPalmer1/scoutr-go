@@ -1,7 +1,7 @@
 package endpoints
 
 import (
-	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
+	"github.com/MichaelPalmer1/simple-api-go/lib/filtering"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
@@ -24,7 +24,7 @@ func (api *SimpleAPI) Search(req models.Request, key string, values []string) ([
 	}
 
 	// Build filters
-	conditions := filterbuilder.MultiFilter(user, key, values)
+	conditions := filtering.MultiFilter(user, key, values)
 	expr, err := expression.NewBuilder().WithFilter(conditions).Build()
 	if err != nil {
 		log.Errorln("Failed to build expression", err)

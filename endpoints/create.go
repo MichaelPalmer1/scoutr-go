@@ -1,7 +1,7 @@
 package endpoints
 
 import (
-	"github.com/MichaelPalmer1/simple-api-go/filterbuilder"
+	"github.com/MichaelPalmer1/simple-api-go/lib/filtering"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
@@ -53,7 +53,7 @@ func (api *SimpleAPI) Create(req models.Request, item map[string]string, validat
 	}
 
 	// Build filters
-	conditions, hasConditions := filterbuilder.Filter(user, nil)
+	conditions, hasConditions := filtering.Filter(user, nil)
 
 	// Append key schema conditions
 	partitionKey := ""
