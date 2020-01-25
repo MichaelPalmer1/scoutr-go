@@ -1,4 +1,4 @@
-package endpoints
+package simpleapi
 
 import (
 	"github.com/MichaelPalmer1/simple-api-go/lib/filtering"

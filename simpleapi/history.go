@@ -1,4 +1,4 @@
-package endpoints
+package simpleapi
 
 import (
 	"errors"
