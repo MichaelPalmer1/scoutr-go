@@ -17,30 +17,32 @@ func Filter(user *models.User, filters map[string]string) (expression.ConditionB
 	re := regexp.MustCompile(`^(.+)__(in|contains|notcontains|startswith|ne|gt|lt|ge|le|between|exists)$`)
 
 	// Build user filters
-	for idx, item := range user.FilterFields {
-		attr := expression.Name(item.Field)
-		if value, ok := item.Value.(string); ok {
-			// Value is a single string
-			condition := attr.Equal(expression.Value(value))
-			initialized = true
-			if idx == 0 {
-				conditions = condition
+	if user != nil {
+		for idx, item := range user.FilterFields {
+			attr := expression.Name(item.Field)
+			if value, ok := item.Value.(string); ok {
+				// Value is a single string
+				condition := attr.Equal(expression.Value(value))
+				initialized = true
+				if idx == 0 {
+					conditions = condition
+				} else {
+					conditions = conditions.And(condition)
+				}
+			} else if value, ok := item.Value.([]interface{}); ok {
+				// Value is a list of strings
+				condition := attr.In(expression.Value(value))
+				initialized = true
+				if idx == 0 {
+					conditions = condition
+				} else {
+					conditions = conditions.And(condition)
+				}
 			} else {
-				conditions = conditions.And(condition)
+				log.Warnln("Received value of unknown type", item.Value)
+				log.Warnln("Type", reflect.TypeOf(item.Value))
+				continue
 			}
-		} else if value, ok := item.Value.([]interface{}); ok {
-			// Value is a list of strings
-			condition := attr.In(expression.Value(value))
-			initialized = true
-			if idx == 0 {
-				conditions = condition
-			} else {
-				conditions = conditions.And(condition)
-			}
-		} else {
-			log.Warnln("Received value of unknown type", item.Value)
-			log.Warnln("Type", reflect.TypeOf(item.Value))
-			continue
 		}
 	}
 
@@ -100,7 +102,7 @@ func Filter(user *models.User, filters map[string]string) (expression.ConditionB
 		}
 	}
 
-	return conditions, len(user.FilterFields) > 0 || len(filters) > 0
+	return conditions, initialized
 }
 
 // MultiFilter : Perform a filter with multiple values

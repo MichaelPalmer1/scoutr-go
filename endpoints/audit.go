@@ -22,7 +22,7 @@ func (api *SimpleAPI) ListAuditLogs(req models.Request, pathParams map[string]st
 	}
 
 	// Get the user
-	user, err := api.initializeRequest(req, *api.Client)
+	_, err := api.initializeRequest(req, *api.Client)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err
@@ -48,7 +48,7 @@ func (api *SimpleAPI) ListAuditLogs(req models.Request, pathParams map[string]st
 	}
 
 	// Build filters
-	conditions, hasConditions := filterbuilder.Filter(user, queryParams)
+	conditions, hasConditions := filterbuilder.Filter(nil, queryParams)
 	if hasConditions {
 		expr, err := expression.NewBuilder().WithFilter(conditions).Build()
 		if err != nil {
