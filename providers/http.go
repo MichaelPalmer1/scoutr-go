@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/MichaelPalmer1/simple-api-go/endpoints"
+	"github.com/MichaelPalmer1/simple-api-go/simpleapi"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/julienschmidt/httprouter"
 )

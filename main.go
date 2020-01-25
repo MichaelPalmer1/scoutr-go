@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
-	"github.com/MichaelPalmer1/simple-api-go/endpoints"
+	"github.com/MichaelPalmer1/simple-api-go/simpleapi"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/providers"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
