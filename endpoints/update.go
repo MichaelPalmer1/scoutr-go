@@ -60,7 +60,11 @@ func (api *SimpleAPI) Update(req models.Request, partitionKey map[string]string,
 
 	// Build filters
 	var expr expression.Expression
-	conditions, hasConditions := filtering.Filter(user, nil)
+	conditions, hasConditions, err := filtering.Filter(user, nil)
+	if err != nil {
+		log.Errorln("Error encountered during filtering", err)
+		return nil, err
+	}
 
 	// Get key schema
 	keySchema, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{

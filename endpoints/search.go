@@ -24,7 +24,11 @@ func (api *SimpleAPI) Search(req models.Request, key string, values []string) ([
 	}
 
 	// Build filters
-	conditions := filtering.MultiFilter(user, key, values)
+	conditions, err := filtering.MultiFilter(user, key, values)
+	if err != nil {
+		log.Errorln("Error encountered during filtering", err)
+		return nil, err
+	}
 	expr, err := expression.NewBuilder().WithFilter(conditions).Build()
 	if err != nil {
 		log.Errorln("Failed to build expression", err)

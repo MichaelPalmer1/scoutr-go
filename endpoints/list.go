@@ -39,7 +39,11 @@ func (api *SimpleAPI) ListTable(req models.Request, uniqueKey string, pathParams
 	}
 
 	// Build filters
-	conditions, hasConditions := filtering.Filter(user, queryParams)
+	conditions, hasConditions, err := filtering.Filter(user, queryParams)
+	if err != nil {
+		log.Errorln("Error encountered during filtering", err)
+		return nil, err
+	}
 	if hasConditions {
 		expr, err := expression.NewBuilder().WithFilter(conditions).Build()
 		if err != nil {

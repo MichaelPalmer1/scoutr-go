@@ -11,7 +11,7 @@ import (
 )
 
 // Filter : Build a filter
-func Filter(user *models.User, filters map[string]string) (expression.ConditionBuilder, bool) {
+func Filter(user *models.User, filters map[string]string) (expression.ConditionBuilder, bool, error) {
 	var conditions expression.ConditionBuilder
 	initialized := false
 	re := regexp.MustCompile(`^(.+)__(in|contains|notcontains|startswith|ne|gt|lt|ge|le|between|exists)$`)
@@ -96,7 +96,9 @@ func Filter(user *models.User, filters map[string]string) (expression.ConditionB
 			case "le":
 				condition = attr.LessThanEqual(expression.Value(value))
 			default:
-				panic("Unsupported magic operator")
+				return conditions, false, &models.BadRequest{
+					Message: "Unsupported magic operator",
+				}
 			}
 		} else {
 			condition = expression.Name(key).Equal(expression.Value(value))
@@ -110,12 +112,15 @@ func Filter(user *models.User, filters map[string]string) (expression.ConditionB
 		}
 	}
 
-	return conditions, initialized
+	return conditions, initialized, nil
 }
 
 // MultiFilter : Perform a filter with multiple values
-func MultiFilter(user *models.User, key string, values []string) expression.ConditionBuilder {
-	conditions, hasValues := Filter(user, nil)
+func MultiFilter(user *models.User, key string, values []string) (expression.ConditionBuilder, error) {
+	conditions, hasValues, err := Filter(user, nil)
+	if err != nil {
+		return conditions, err
+	}
 
 	// Build the condition
 	condition := expression.Name(key).In(expression.Value(values))
@@ -126,5 +131,5 @@ func MultiFilter(user *models.User, key string, values []string) expression.Cond
 		conditions = condition
 	}
 
-	return conditions
+	return conditions, nil
 }

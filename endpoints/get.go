@@ -39,7 +39,11 @@ func (api *SimpleAPI) Get(req models.Request, id string) (models.Record, error) 
 	}
 
 	// Build filters
-	conditions, hasConditions := filtering.Filter(user, map[string]string{})
+	conditions, hasConditions, err := filtering.Filter(user, map[string]string{})
+	if err != nil {
+		log.Errorln("Error encountered during filtering", err)
+		return nil, err
+	}
 	keyCondition := expression.Name(partitionKey).Equal(expression.Value(id))
 	if hasConditions {
 		conditions = conditions.And(keyCondition)

@@ -53,7 +53,11 @@ func (api *SimpleAPI) Create(req models.Request, item map[string]string, validat
 	}
 
 	// Build filters
-	conditions, hasConditions := filtering.Filter(user, nil)
+	conditions, hasConditions, err := filtering.Filter(user, nil)
+	if err != nil {
+		log.Errorln("Error encountered during filtering", err)
+		return err
+	}
 
 	// Append key schema conditions
 	partitionKey := ""
