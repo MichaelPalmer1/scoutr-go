@@ -1,4 +1,4 @@
-package httpserver
+package providers
 
 import (
 	"encoding/json"
@@ -35,7 +35,7 @@ func HTTPErrorHandler(err error, w http.ResponseWriter) bool {
 }
 
 // InitHTTPServer : Initialize the HTTP server
-func InitHTTPServer(api endpoints.SimpleAPI, partitionKey string, primaryListEndpoint string, historyActions []string) (*httprouter.Router, error) {
+func InitHTTPServer(api simpleapi.SimpleAPI, partitionKey string, primaryListEndpoint string, historyActions []string) (*httprouter.Router, error) {
 
 	// Format primary endpoint
 	if !strings.HasPrefix(primaryListEndpoint, "/") {

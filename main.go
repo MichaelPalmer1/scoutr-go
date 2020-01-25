@@ -10,8 +10,8 @@ import (
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
 	"github.com/MichaelPalmer1/simple-api-go/endpoints"
-	"github.com/MichaelPalmer1/simple-api-go/lib/httpserver"
 	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/MichaelPalmer1/simple-api-go/providers"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -24,7 +24,7 @@ import (
 // Record : Item in Dynamo
 type Record map[string]interface{}
 
-var api endpoints.SimpleAPI
+var api simpleapi.SimpleAPI
 var validation map[string]utils.FieldValidation
 
 func init() {
@@ -81,7 +81,7 @@ func create(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	err = api.Create(request, body, validation)
 
 	// Check for errors in the response
-	if httpserver.HTTPErrorHandler(err, w) {
+	if providers.HTTPErrorHandler(err, w) {
 		return
 	}
 
@@ -111,7 +111,7 @@ func get(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	data, err := api.Get(request, params.ByName("id"))
 
 	// Check for errors in the response
-	if httpserver.HTTPErrorHandler(err, w) {
+	if providers.HTTPErrorHandler(err, w) {
 		return
 	}
 
@@ -167,7 +167,7 @@ func update(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	data, err := api.Update(request, partitionKey, body, validation, "UPDATE")
 
 	// Check for errors in the response
-	if httpserver.HTTPErrorHandler(err, w) {
+	if providers.HTTPErrorHandler(err, w) {
 		return
 	}
 
@@ -192,7 +192,7 @@ func main() {
 	api.Config = config
 
 	// Initialize http server
-	router, err := httpserver.InitHTTPServer(api, "id", "/items/", []string{"CREATE", "UPDATE"})
+	router, err := providers.InitHTTPServer(api, "id", "/items/", []string{"CREATE", "UPDATE"})
 	if err != nil {
 		panic(err)
 	}
