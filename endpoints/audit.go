@@ -13,7 +13,7 @@ import (
 )
 
 // ListAuditLogs : List audit logs
-func (api *SimpleAPI) ListAuditLogs(req models.Request, pathParams map[string]string, queryParams map[string]string) ([]models.Record, error) {
+func (api *SimpleAPI) ListAuditLogs(req models.Request, pathParams map[string]string, queryParams map[string]string) ([]models.AuditLog, error) {
 	// Only fetch audit logs if the table is configured
 	if api.Config.AuditTable == "" {
 		return nil, &models.NotFound{
@@ -62,7 +62,7 @@ func (api *SimpleAPI) ListAuditLogs(req models.Request, pathParams map[string]st
 	}
 
 	// Download the data
-	data, err := scan(&input, api.Client)
+	data, err := scanAudit(&input, api.Client)
 	if err != nil {
 		log.Errorln("Error while attempting to list records", err)
 		return nil, nil
@@ -71,7 +71,7 @@ func (api *SimpleAPI) ListAuditLogs(req models.Request, pathParams map[string]st
 	return data, nil
 }
 
-// AuditLog : Creates an audit log
+// auditLog : Creates an audit log
 func (api *SimpleAPI) auditLog(action string, request models.Request, user models.User, resource *map[string]string, changes *map[string]string) error {
 	// Only send audit logs if the table is configured
 	if api.Config.AuditTable == "" {

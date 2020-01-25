@@ -39,6 +39,27 @@ func scan(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.Record
 	return results, nil
 }
 
+func scanAudit(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.AuditLog, error) {
+	results := []models.AuditLog{}
+	err := client.ScanPages(input,
+		func(page *dynamodb.ScanOutput, lastPage bool) bool {
+			// Unmarshal data into AuditLog model
+			records := []models.AuditLog{}
+			dynamodbattribute.UnmarshalListOfMaps(page.Items, &records)
+
+			// Append records to results
+			results = append(results, records...)
+
+			return true
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
 // CanAccessEndpoint : Check whether a user has permission to access an endpoint
 func (api *SimpleAPI) CanAccessEndpoint(method string, path string, user *models.User, request *models.Request) bool {
 	var err error

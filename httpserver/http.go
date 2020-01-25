@@ -256,7 +256,47 @@ func InitHTTPServer(api endpoints.SimpleAPI, partitionKey string, primaryListEnd
 	}
 
 	history := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		queryParams := make(map[string]string)
 
+		userData := models.UserData{
+			Name:     "Michael",
+			Email:    "Michael@Palmer.com",
+			Username: "michael",
+			Groups:   []string{"group1", "group2"},
+		}
+
+		requestUser := models.RequestUser{
+			ID:   "michael",
+			Data: &userData,
+		}
+
+		// Parse query params
+		for key, values := range req.URL.Query() {
+			queryParams[key] = values[0]
+		}
+
+		// Build the request model
+		request := models.Request{
+			User:        requestUser,
+			Method:      req.Method,
+			Path:        req.URL.Path,
+			QueryParams: queryParams,
+			SourceIP:    req.RemoteAddr,
+			UserAgent:   req.UserAgent(),
+		}
+
+		// List the table
+		data, err := api.History(request, "id", params.ByName("item"), queryParams, []string{"CREATE", "UPDATE", "DELETE"})
+
+		// Check for errors in the response
+		if HTTPErrorHandler(err, w) {
+			return
+		}
+
+		// Marshal the response and write it to output
+		out, _ := json.Marshal(data)
+		w.Header().Add("Content-Type", "application/json")
+		w.Write(out)
 	}
 
 	// Create routes

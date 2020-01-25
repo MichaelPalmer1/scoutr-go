@@ -91,3 +91,9 @@ type AuditLog struct {
 	Resource    map[string]string `json:"resource,omitempty"`
 	Body        interface{}       `json:"body,omitempty"`
 }
+
+// History : History object
+type History struct {
+	Time string `json:"time"`
+	Data Record `json:"data"`
+}
