@@ -3,14 +3,9 @@ package models
 // Record : Data record
 type Record map[string]interface{}
 
-// RequestUserData : User Data
-type RequestUserData struct {
-	Groups []string
-}
-
 // RequestUser : User object
 type RequestUser struct {
-	ID   string `json:"id"`
+	ID   string
 	Data *UserData
 }
 

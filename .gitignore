@@ -3,3 +3,4 @@ simple-api-go
 __debug_bin
 vendor/
 bin/
+*.json

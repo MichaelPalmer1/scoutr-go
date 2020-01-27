@@ -139,14 +139,14 @@ func InitHTTPServer(api simpleapi.SimpleAPI, partitionKey string, primaryListEnd
 
 	userInfo := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		// Lookup information about the user
-		info := map[string]string{
-			"id":    req.Header.Get("Oidc-Claim-Sub"),
-			"name":  req.Header.Get("Oidc-Claim-Name"),
-			"email": req.Header.Get("Oidc-Claim-Mail"),
-		}
+		user := GetUserFromOIDC(req, api.Config)
 
 		// Marshal data and write to output
-		data, err := json.Marshal(info)
+		data, err := json.Marshal(map[string]string{
+			"id": user.ID,
+			"name": user.Data.Name,
+			"email": user.Data.Email,
+		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -160,16 +160,8 @@ func InitHTTPServer(api simpleapi.SimpleAPI, partitionKey string, primaryListEnd
 	}
 
 	userHasPermission := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		userData := models.UserData{
-			Name:     req.Header.Get("Oidc-Claim-Name"),
-			Email:    req.Header.Get("Oidc-Claim-Mail"),
-			Username: req.Header.Get("Oidc-Claim-Sub"),
-		}
-
-		requestUser := models.RequestUser{
-			ID:   req.Header.Get("Oidc-Claim-Sub"),
-			Data: &userData,
-		}
+		// Get user
+		requestUser := GetUserFromOIDC(req, api.Config)
 
 		// Build the request model
 		request := models.Request{

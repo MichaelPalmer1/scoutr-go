@@ -7,4 +7,8 @@ type Config struct {
 	AuditTable       string
 	GroupTable       string
 	LogRetentionDays int
+	OIDCUsernameClaim string
+	OIDCNameClaim string
+	OIDCEmailClaim string
+	OIDCGroupClaim string
 }
