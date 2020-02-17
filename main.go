@@ -21,7 +21,7 @@ func main() {
 		UserAgent:  "test",
 		SourceIP:   "1.2.3.4",
 		User: models.RequestUser{
-			ID: "michael",
+			ID: "michafel",
 		},
 	}
 
