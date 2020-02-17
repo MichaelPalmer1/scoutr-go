@@ -8,6 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// InitializeRequest : Given a request, get the corresponding user and perform
+// user and request validation.
 func (api *FirestoreAPI) InitializeRequest(req models.Request) (*models.User, error) {
 	var userData *models.UserData
 	groups := []string{}
@@ -36,15 +38,7 @@ func (api *FirestoreAPI) InitializeRequest(req models.Request) (*models.User, er
 
 func (api *FirestoreAPI) GetUser(id string, userData *models.UserData, groups []string) (*models.User, error) {
 	isUser := true
-	user := models.User{
-		ID:                     id,
-		PermittedEndpoints:     []models.PermittedEndpoint{},
-		FilterFields:           []models.FilterFields{},
-		ExcludeFields:          []string{},
-		UpdateFieldsPermitted:  []string{},
-		UpdateFieldsRestricted: []string{},
-		Groups:                 []string{},
-	}
+	user := models.User{ID: id}
 	authCollection := api.client.Collection(api.Config.AuthTable)
 	groupCollection := api.client.Collection(api.Config.GroupTable)
 
@@ -131,13 +125,7 @@ func (api *FirestoreAPI) GetUser(id string, userData *models.UserData, groups []
 
 	// If the user is a member of a group, merge in the group's permissions
 	for _, groupID := range user.Groups {
-		group := models.Group{
-			PermittedEndpoints:     []models.PermittedEndpoint{},
-			FilterFields:           []models.FilterFields{},
-			ExcludeFields:          []string{},
-			UpdateFieldsPermitted:  []string{},
-			UpdateFieldsRestricted: []string{},
-		}
+		group := models.Group{}
 		result, err := groupCollection.Doc(groupID).Get(api.context)
 		if err != nil {
 			log.Errorln("Failed to get group", err)

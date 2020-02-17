@@ -10,6 +10,34 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// InitializeRequest : Given a request, get the corresponding user and perform
+// user and request validation.
+func (api *DynamoAPI) InitializeRequest(req models.Request) (*models.User, error) {
+	var userData *models.UserData
+	groups := []string{}
+
+	if req.User.Data != nil {
+		userData = req.User.Data
+	}
+
+	user, err := api.GetUser(req.User.ID, userData, groups)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := api.ValidateUser(user); err != nil {
+		log.Warnln("[%s] Bad User - %s", api.UserIdentifier(user), err)
+		return nil, err
+	}
+
+	if err := api.ValidateRequest(req, user); err != nil {
+		log.Warnf("[%s] %s", api.UserIdentifier(user), err)
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func (api *DynamoAPI) GetUser(id string, userData *models.UserData, groups []string) (*models.User, error) {
 	isUser := true
 	user := models.User{ID: id}
