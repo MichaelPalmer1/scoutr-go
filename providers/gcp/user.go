@@ -45,6 +45,7 @@ func (api *FirestoreAPI) GetUser(id string, userData *models.UserData, groups []
 	// Try to find user in the auth table
 	result, err := authCollection.Doc(id).Get(api.context)
 	if err != nil {
+		// TODO: Need better error handling to determine if the collection exists
 		log.Errorln("Failed to get user", err)
 		return nil, err
 	} else if result.Data() == nil {
@@ -67,6 +68,7 @@ func (api *FirestoreAPI) GetUser(id string, userData *models.UserData, groups []
 		doc := groupCollection.Doc(groupID)
 		result, err := doc.Get(api.context)
 		if err != nil {
+			// TODO: Need better error handling to determine if the collection exists
 			log.Errorln("Failed to get group", err)
 			return nil, err
 		} else if result.Data() == nil {
