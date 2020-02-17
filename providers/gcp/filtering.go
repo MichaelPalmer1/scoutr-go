@@ -85,3 +85,16 @@ func buildFilters(user *models.User, filters map[string]string, collection *fire
 
 	return query, nil
 }
+
+func multiFilter(user *models.User, collection *firestore.CollectionRef, key string, values []string) (firestore.Query, error) {
+	query, err := buildFilters(user, nil, collection)
+	if err != nil {
+		return collection.Query, err
+	}
+
+	// Build the condition
+	// TODO: Handle if there are more than 10 values
+	query = query.Where(key, "in", values)
+
+	return query, nil
+}

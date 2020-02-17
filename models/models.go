@@ -33,7 +33,7 @@ type FilterFields struct {
 	Value interface{} `json:"value"`
 }
 
-type permissions struct {
+type Permissions struct {
 	PermittedEndpoints     []PermittedEndpoint `json:"permitted_endpoints"`
 	FilterFields           []FilterFields      `json:"filter_fields"`
 	ExcludeFields          []string            `json:"exclude_fields"`
@@ -44,7 +44,7 @@ type permissions struct {
 // Group : Group object
 type Group struct {
 	ID string `json:"group_id"`
-	permissions
+	Permissions
 }
 
 // User : User object
@@ -54,7 +54,7 @@ type User struct {
 	Name     string   `json:"name"`
 	Email    string   `json:"email"`
 	Groups   []string `json:"groups"`
-	permissions
+	Permissions
 }
 
 // AuditUser : User object used in audit logs

@@ -11,14 +11,7 @@ import (
 // InitializeRequest : Given a request, get the corresponding user and perform
 // user and request validation.
 func (api *FirestoreAPI) InitializeRequest(req models.Request) (*models.User, error) {
-	var userData *models.UserData
-	groups := []string{}
-
-	if req.User.Data != nil {
-		userData = req.User.Data
-	}
-
-	user, err := api.GetUser(req.User.ID, userData, groups)
+	user, err := api.GetUser(req.User.ID, req.User.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +29,7 @@ func (api *FirestoreAPI) InitializeRequest(req models.Request) (*models.User, er
 	return user, nil
 }
 
-func (api *FirestoreAPI) GetUser(id string, userData *models.UserData, groups []string) (*models.User, error) {
+func (api *FirestoreAPI) GetUser(id string, userData *models.UserData) (*models.User, error) {
 	isUser := true
 	user := models.User{ID: id}
 	authCollection := api.client.Collection(api.Config.AuthTable)
@@ -47,8 +40,7 @@ func (api *FirestoreAPI) GetUser(id string, userData *models.UserData, groups []
 	if err != nil {
 		// TODO: Need better error handling to determine if the collection exists
 		log.Errorln("Failed to get user", err)
-		return nil, err
-	} else if result.Data() == nil {
+
 		// Failed to find user in the table
 		isUser = false
 	} else {
@@ -61,67 +53,67 @@ func (api *FirestoreAPI) GetUser(id string, userData *models.UserData, groups []
 		json.Unmarshal(data, &user)
 	}
 
-	// Try to find groups in the auth table
-	groupIDs := []string{}
-	for _, groupID := range groups {
-		var group models.User
-		doc := groupCollection.Doc(groupID)
-		result, err := doc.Get(api.context)
-		if err != nil {
-			// TODO: Need better error handling to determine if the collection exists
-			log.Errorln("Failed to get group", err)
-			return nil, err
-		} else if result.Data() == nil {
-			// Group is not in the table
-			continue
-		} else {
-			// Found group, unmarshal into group object
-			data, err := json.Marshal(result.Data())
+	// Try to find supplied entitlements in the auth table
+	entitlementIDs := []string{}
+	if userData != nil {
+		for _, id := range userData.Groups {
+			var entitlement models.User
+			result, err := authCollection.Doc(id).Get(api.context)
 			if err != nil {
-				log.Errorf("Failed to marshal to json: %v", err)
-				return nil, err
+				// TODO: Need better error handling to determine if the collection exists
+				log.Errorln("Failed to get group", err)
+
+				// User group is not in the table
+				continue
+			} else {
+				// Found group, unmarshal into group object
+				data, err := json.Marshal(result.Data())
+				if err != nil {
+					log.Errorf("Failed to marshal to json: %v", err)
+					return nil, err
+				}
+				json.Unmarshal(data, &entitlement)
 			}
-			json.Unmarshal(data, &group)
-		}
 
-		// Store this as a real group
-		groupIDs = append(groupIDs, groupID)
+			// Store this as a real entitement
+			entitlementIDs = append(entitlementIDs, id)
 
-		// Add sub-groups
-		for _, item := range group.Groups {
-			user.Groups = append(user.Groups, item)
-		}
+			// Add sub-groups
+			for _, item := range entitlement.Groups {
+				user.Groups = append(user.Groups, item)
+			}
 
-		// Merge permitted endpoints
-		for _, item := range group.PermittedEndpoints {
-			user.PermittedEndpoints = append(user.PermittedEndpoints, item)
-		}
+			// Merge permitted endpoints
+			for _, item := range entitlement.PermittedEndpoints {
+				user.PermittedEndpoints = append(user.PermittedEndpoints, item)
+			}
 
-		// Merge exclude fields
-		for _, item := range group.ExcludeFields {
-			user.ExcludeFields = append(user.ExcludeFields, item)
-		}
+			// Merge exclude fields
+			for _, item := range entitlement.ExcludeFields {
+				user.ExcludeFields = append(user.ExcludeFields, item)
+			}
 
-		// Merge update fields restricted
-		for _, item := range group.UpdateFieldsRestricted {
-			user.UpdateFieldsRestricted = append(user.UpdateFieldsRestricted, item)
-		}
+			// Merge update fields restricted
+			for _, item := range entitlement.UpdateFieldsRestricted {
+				user.UpdateFieldsRestricted = append(user.UpdateFieldsRestricted, item)
+			}
 
-		// Merge update fields permitted
-		for _, item := range group.UpdateFieldsPermitted {
-			user.UpdateFieldsPermitted = append(user.UpdateFieldsPermitted, item)
-		}
+			// Merge update fields permitted
+			for _, item := range entitlement.UpdateFieldsPermitted {
+				user.UpdateFieldsPermitted = append(user.UpdateFieldsPermitted, item)
+			}
 
-		// Merge filter fields
-		for _, item := range group.FilterFields {
-			user.FilterFields = append(user.FilterFields, item)
+			// Merge filter fields
+			for _, item := range entitlement.FilterFields {
+				user.FilterFields = append(user.FilterFields, item)
+			}
 		}
 	}
 
 	// Check that a user was found
-	if !isUser && len(groupIDs) == 0 {
+	if !isUser && len(entitlementIDs) == 0 {
 		return nil, &models.Unauthorized{
-			Message: fmt.Sprintf("User '%s' is not authorized", id),
+			Message: fmt.Sprintf("Auth id '%s' is not authorized", id),
 		}
 	}
 
@@ -147,30 +139,8 @@ func (api *FirestoreAPI) GetUser(id string, userData *models.UserData, groups []
 			json.Unmarshal(data, &group)
 		}
 
-		// Merge permitted endpoints
-		for _, item := range group.PermittedEndpoints {
-			user.PermittedEndpoints = append(user.PermittedEndpoints, item)
-		}
-
-		// Merge exclude fields
-		for _, item := range group.ExcludeFields {
-			user.ExcludeFields = append(user.ExcludeFields, item)
-		}
-
-		// Merge update fields restricted
-		for _, item := range group.UpdateFieldsRestricted {
-			user.UpdateFieldsRestricted = append(user.UpdateFieldsRestricted, item)
-		}
-
-		// Merge update fields permitted
-		for _, item := range group.UpdateFieldsPermitted {
-			user.UpdateFieldsPermitted = append(user.UpdateFieldsPermitted, item)
-		}
-
-		// Merge filter fields
-		for _, item := range group.FilterFields {
-			user.FilterFields = append(user.FilterFields, item)
-		}
+		// Merge permissions
+		api.MergePermissions(&user, &group)
 	}
 
 	// Save user groups before applying metadata
@@ -192,14 +162,14 @@ func (api *FirestoreAPI) GetUser(id string, userData *models.UserData, groups []
 		}
 	}
 
-	// Update user object with all applied OIDC groups
-	if len(groupIDs) > 0 {
+	// Update user object with all applied entitlements
+	if len(entitlementIDs) > 0 {
 		var groups []string
 		for _, groupID := range userGroups {
 			groups = append(groups, groupID)
 		}
-		for _, groupID := range groupIDs {
-			groups = append(groups, groupID)
+		for _, entitlement := range entitlementIDs {
+			groups = append(groups, entitlement)
 		}
 		user.Groups = groups
 	}

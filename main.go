@@ -21,7 +21,13 @@ func main() {
 		UserAgent:  "test",
 		SourceIP:   "1.2.3.4",
 		User: models.RequestUser{
-			ID: "michafel",
+			ID: "fff",
+			Data: &models.UserData{
+				Username: "mp",
+				Name:     "Michael",
+				Email:    "michael@michael.michael",
+				Groups:   []string{"michael2"},
+			},
 		},
 	}
 
@@ -38,6 +44,7 @@ func main() {
 
 	// Initialize the client
 	gcp.Init("simple-api-265401", option.WithCredentialsFile("/home/michael/Downloads/gcp.json"))
+	defer gcp.Close()
 
 	// List the records
 	records, err := gcp.List(request)
