@@ -12,7 +12,7 @@ import (
 // FirestoreAPI : API, based off of SimpleAPI, used to talk to Google Firestore
 type FirestoreAPI struct {
 	*base.SimpleAPI
-	client  *firestore.Client
+	Client  *firestore.Client
 	context context.Context
 }
 
@@ -23,10 +23,10 @@ func (api *FirestoreAPI) Init(projectID string, options option.ClientOption) {
 	if err != nil {
 		log.Fatalln("Failed to initialize Firestore client", err)
 	}
-	api.client = client
+	api.Client = client
 }
 
 // Close : Close all connections
 func (api *FirestoreAPI) Close() {
-	api.client.Close()
+	api.Client.Close()
 }

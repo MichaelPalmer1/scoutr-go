@@ -61,7 +61,7 @@ func amazon() {
 	// Initialize the client
 	usr, _ := user.Current()
 	creds := credentials.NewSharedCredentials(filepath.Join(usr.HomeDir, ".aws/credentials"), "default")
-	api.Init(aws.Config{
+	api.Init(&aws.Config{
 		Region:      aws.String("us-east-1"),
 		Credentials: creds,
 	})

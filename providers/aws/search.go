@@ -39,7 +39,7 @@ func (api *DynamoAPI) Search(req models.Request, key string, values []string) ([
 	input.ExpressionAttributeValues = expr.Values()
 
 	// Download the data
-	data, err := scan(&input, api.client)
+	data, err := scan(&input, api.Client)
 	if err != nil {
 		log.Errorln("Error while attempting to list records", err)
 		return nil, nil

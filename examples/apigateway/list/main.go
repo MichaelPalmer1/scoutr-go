@@ -31,7 +31,7 @@ func list(event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, 
 	api, request := providers.InitAPIGateway(event, config)
 
 	// List the data
-	data, err := api.ListTable(request)
+	data, err := api.List(request)
 
 	// Handle any errors
 	if errorResponse := providers.APIGatewayErrorHandler(err); errorResponse != nil {

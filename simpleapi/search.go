@@ -1,5 +1,7 @@
 package simpleapi
 
+// THIS FILE IS DEPRECATED AND MOVED TO PROVIDERS/AWS
+
 import (
 	"github.com/MichaelPalmer1/simple-api-go/lib/filtering"
 	"github.com/MichaelPalmer1/simple-api-go/models"

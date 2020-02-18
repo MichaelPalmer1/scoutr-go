@@ -37,7 +37,7 @@ func (api *DynamoAPI) GetUser(id string, userData *models.UserData) (*models.Use
 	user := models.User{ID: id}
 
 	// Try to find user in the auth table
-	result, err := api.client.GetItem(&dynamodb.GetItemInput{
+	result, err := api.Client.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(api.Config.AuthTable),
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {S: aws.String(id)},
@@ -59,7 +59,7 @@ func (api *DynamoAPI) GetUser(id string, userData *models.UserData) (*models.Use
 	if userData != nil {
 		for _, groupID := range userData.Groups {
 			var group models.User
-			result, err := api.client.GetItem(&dynamodb.GetItemInput{
+			result, err := api.Client.GetItem(&dynamodb.GetItemInput{
 				TableName: aws.String(api.Config.AuthTable),
 				Key: map[string]*dynamodb.AttributeValue{
 					"id": {S: aws.String(groupID)},
@@ -121,7 +121,7 @@ func (api *DynamoAPI) GetUser(id string, userData *models.UserData) (*models.Use
 	// If the user is a member of a group, merge in the group's permissions
 	for _, groupID := range user.Groups {
 		var group models.Group
-		result, err := api.client.GetItem(&dynamodb.GetItemInput{
+		result, err := api.Client.GetItem(&dynamodb.GetItemInput{
 			TableName: aws.String(api.Config.GroupTable),
 			Key: map[string]*dynamodb.AttributeValue{
 				"group_id": {S: aws.String(groupID)},

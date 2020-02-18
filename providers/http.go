@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
-	"github.com/MichaelPalmer1/simple-api-go/simpleapi"
+	dynamo "github.com/MichaelPalmer1/simple-api-go/providers/aws"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -35,7 +35,7 @@ func HTTPErrorHandler(err error, w http.ResponseWriter) bool {
 }
 
 // InitHTTPServer : Initialize the HTTP server
-func InitHTTPServer(api simpleapi.SimpleAPI, partitionKey string, primaryListEndpoint string, historyActions []string) (*httprouter.Router, error) {
+func InitHTTPServer(api dynamo.DynamoAPI, partitionKey string, primaryListEndpoint string, historyActions []string) (*httprouter.Router, error) {
 
 	// Format primary endpoint
 	if !strings.HasPrefix(primaryListEndpoint, "/") {
@@ -87,7 +87,7 @@ func InitHTTPServer(api simpleapi.SimpleAPI, partitionKey string, primaryListEnd
 		}
 
 		// List the table
-		data, err := api.ListTable(request)
+		data, err := api.List(request)
 
 		// Check for errors in the response
 		if HTTPErrorHandler(err, w) {
@@ -143,8 +143,8 @@ func InitHTTPServer(api simpleapi.SimpleAPI, partitionKey string, primaryListEnd
 
 		// Marshal data and write to output
 		data, err := json.Marshal(map[string]string{
-			"id": user.ID,
-			"name": user.Data.Name,
+			"id":    user.ID,
+			"name":  user.Data.Name,
 			"email": user.Data.Email,
 		})
 		if err != nil {

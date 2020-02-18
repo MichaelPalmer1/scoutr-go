@@ -7,15 +7,14 @@ import (
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
 	"github.com/MichaelPalmer1/simple-api-go/models"
-	"github.com/MichaelPalmer1/simple-api-go/simpleapi"
+	dynamo "github.com/MichaelPalmer1/simple-api-go/providers/aws"
+	"github.com/MichaelPalmer1/simple-api-go/providers/base"
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	log "github.com/sirupsen/logrus"
 )
 
 // InitAPIGateway : Initialize API Gateway
-func InitAPIGateway(event events.APIGatewayProxyRequest, config config.Config) (simpleapi.SimpleAPI, models.Request) {
+func InitAPIGateway(event events.APIGatewayProxyRequest, config config.Config) (dynamo.DynamoAPI, models.Request) {
 	// Build request user
 	requestUser := models.RequestUser{
 		ID: event.RequestContext.Identity.APIKeyID,
@@ -41,14 +40,14 @@ func InitAPIGateway(event events.APIGatewayProxyRequest, config config.Config) (
 		request.QueryParams = make(map[string]string)
 	}
 
-	// Create session
-	sess := session.Must(session.NewSession())
-
 	// Create API
-	api := simpleapi.SimpleAPI{
-		Config: config,
-		Client: dynamodb.New(sess),
+	api := dynamo.DynamoAPI{
+		SimpleAPI: &base.SimpleAPI{
+			Config: config,
+		},
 	}
+
+	api.Init(nil)
 
 	return api, request
 }

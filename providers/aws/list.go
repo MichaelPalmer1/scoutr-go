@@ -64,7 +64,7 @@ func (api *DynamoAPI) List(req models.Request) ([]models.Record, error) {
 	}
 
 	// Download the data
-	data, err := scan(&input, api.client)
+	data, err := scan(&input, api.Client)
 	if err != nil {
 		log.Errorln("Error while attempting to list records", err)
 		return nil, nil
@@ -131,7 +131,7 @@ func (api *DynamoAPI) ListUniqueValues(req models.Request, uniqueKey string) ([]
 	input.ProjectionExpression = expr.Projection()
 
 	// Download the data
-	data, err := scan(&input, api.client)
+	data, err := scan(&input, api.Client)
 	if err != nil {
 		log.Errorln("Error while attempting to list records", err)
 		return nil, nil

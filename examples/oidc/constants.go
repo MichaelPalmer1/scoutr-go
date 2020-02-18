@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 
-	"github.com/MichaelPalmer1/simple-api-go/simpleapi"
+	"github.com/MichaelPalmer1/simple-api-go/providers/aws"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 )
 
-var api simpleapi.SimpleAPI
+var api aws.DynamoAPI
 var validation map[string]utils.FieldValidation
 
 func init() {

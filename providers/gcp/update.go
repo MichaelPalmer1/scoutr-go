@@ -40,7 +40,7 @@ func (api *FirestoreAPI) Update(req models.Request, partitionKey map[string]stri
 	// TODO: Build pre-condition filters
 
 	// Update the item
-	collection := api.client.Collection(api.Config.DataTable)
+	collection := api.Client.Collection(api.Config.DataTable)
 	_, err = collection.Doc(partitionKey[api.Config.PrimaryKey]).Update(api.context, updates)
 	if err != nil {
 		log.Errorln("Error while attempting to update item", err)

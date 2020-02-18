@@ -1,5 +1,7 @@
 package simpleapi
 
+// THIS FILE IS DEPRECATED AND MOVED TO PROVIDERS/AWS
+
 import (
 	"fmt"
 	"regexp"

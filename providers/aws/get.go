@@ -21,7 +21,7 @@ func (api *DynamoAPI) Get(req models.Request, id string) (models.Record, error) 
 	}
 
 	// Lookup the partition key
-	tableInfo, err := api.client.DescribeTable(&dynamodb.DescribeTableInput{
+	tableInfo, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
 		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
@@ -65,7 +65,7 @@ func (api *DynamoAPI) Get(req models.Request, id string) (models.Record, error) 
 	}
 
 	// Download the data
-	data, err := scan(&input, api.client)
+	data, err := scan(&input, api.Client)
 	if err != nil {
 		log.Errorln("Error while attempting to list records", err)
 		return nil, nil

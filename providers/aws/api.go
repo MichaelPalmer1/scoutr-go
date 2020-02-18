@@ -12,13 +12,13 @@ import (
 // DynamoAPI : API, based off of SimpleAPI, used to talk to AWS DynamoDB
 type DynamoAPI struct {
 	*base.SimpleAPI
-	client *dynamodb.DynamoDB
+	Client *dynamodb.DynamoDB
 }
 
 // Init : Initialize the Dynamo client
-func (api *DynamoAPI) Init(config aws.Config) {
-	sess := session.Must(session.NewSession(&config))
-	api.client = dynamodb.New(sess)
+func (api *DynamoAPI) Init(config *aws.Config) {
+	sess := session.Must(session.NewSession(config))
+	api.Client = dynamodb.New(sess)
 }
 
 func scan(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.Record, error) {

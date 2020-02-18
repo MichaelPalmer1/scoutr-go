@@ -66,7 +66,7 @@ func (api *DynamoAPI) ListAuditLogs(req models.Request, pathParams map[string]st
 	}
 
 	// Download the data
-	data, err := scanAudit(&input, api.client)
+	data, err := scanAudit(&input, api.Client)
 	if err != nil {
 		log.Errorln("Error while attempting to list records", err)
 		return nil, nil
@@ -135,7 +135,7 @@ func (api *DynamoAPI) auditLog(action string, request models.Request, user model
 	}
 
 	// Add the record to dynamo
-	_, err = api.client.PutItem(&input)
+	_, err = api.Client.PutItem(&input)
 	if err != nil {
 		log.Errorln("Failed to put audit log in Dynamo", err)
 		log.Infof("Failed audit log: '%s'", auditLog)

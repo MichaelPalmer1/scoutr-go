@@ -25,7 +25,7 @@ func (api *FirestoreAPI) Create(req models.Request, item map[string]string, vali
 		}
 	}
 
-	collection := api.client.Collection(api.Config.DataTable)
+	collection := api.Client.Collection(api.Config.DataTable)
 	doc := collection.Doc(item[api.Config.PrimaryKey])
 
 	// TODO: Build pre-condition filters. This may take more work with Firestore...

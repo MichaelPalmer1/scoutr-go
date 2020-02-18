@@ -32,8 +32,8 @@ func (api *FirestoreAPI) InitializeRequest(req models.Request) (*models.User, er
 func (api *FirestoreAPI) GetUser(id string, userData *models.UserData) (*models.User, error) {
 	isUser := true
 	user := models.User{ID: id}
-	authCollection := api.client.Collection(api.Config.AuthTable)
-	groupCollection := api.client.Collection(api.Config.GroupTable)
+	authCollection := api.Client.Collection(api.Config.AuthTable)
+	groupCollection := api.Client.Collection(api.Config.GroupTable)
 
 	// Try to find user in the auth table
 	result, err := authCollection.Doc(id).Get(api.context)

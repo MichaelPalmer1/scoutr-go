@@ -44,7 +44,7 @@ func (api *DynamoAPI) Create(req models.Request, item map[string]string, validat
 	}
 
 	// Get key schema
-	output, err := api.client.DescribeTable(&dynamodb.DescribeTableInput{
+	output, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
 		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
@@ -87,7 +87,7 @@ func (api *DynamoAPI) Create(req models.Request, item map[string]string, validat
 	input.ExpressionAttributeValues = expr.Values()
 
 	// Put the item into dynamo
-	_, err = api.client.PutItem(&input)
+	_, err = api.Client.PutItem(&input)
 	if err != nil {
 		log.Errorln("Error while attempting to add item to dynamo", err)
 

@@ -15,7 +15,7 @@ func (api *FirestoreAPI) Search(req models.Request, key string, values []string)
 	}
 
 	// TODO: Build filters
-	collection := api.client.Collection(api.Config.DataTable)
+	collection := api.Client.Collection(api.Config.DataTable)
 	query, err := multiFilter(user, collection, key, values)
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)

@@ -30,7 +30,7 @@ func (api *FirestoreAPI) List(req models.Request) ([]models.Record, error) {
 	}
 
 	// Build filters
-	collection, err := buildFilters(user, req.QueryParams, api.client.Collection(api.Config.DataTable))
+	collection, err := buildFilters(user, req.QueryParams, api.Client.Collection(api.Config.DataTable))
 	if err != nil {
 		return nil, err
 	}

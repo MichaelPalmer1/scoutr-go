@@ -67,7 +67,7 @@ func (api *DynamoAPI) Update(req models.Request, partitionKey map[string]string,
 	}
 
 	// Get key schema
-	keySchema, err := api.client.DescribeTable(&dynamodb.DescribeTableInput{
+	keySchema, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
 		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
@@ -110,7 +110,7 @@ func (api *DynamoAPI) Update(req models.Request, partitionKey map[string]string,
 	input.ExpressionAttributeValues = expr.Values()
 
 	// Update the item in dynamo
-	updatedItem, err := api.client.UpdateItem(&input)
+	updatedItem, err := api.Client.UpdateItem(&input)
 	if err != nil {
 		log.Errorln("Error while attempting to update item in dynamo", err)
 
