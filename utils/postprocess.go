@@ -1,5 +1,7 @@
 package utils
 
+// THIS FILE IS DEPRECATED AND MOVED TO PROVIDERS/BASE
+
 import "github.com/MichaelPalmer1/simple-api-go/models"
 
 // PostProcess : Perform post processing on data

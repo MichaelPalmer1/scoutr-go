@@ -1,5 +1,7 @@
 package utils
 
+// THIS FILE IS DEPRECATED AND MOVED TO PROVIDERS/AWS AND PROVIDERS/GCP
+
 import (
 	"fmt"
 
