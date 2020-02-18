@@ -2,7 +2,6 @@ package gcp
 
 import (
 	"github.com/MichaelPalmer1/simple-api-go/models"
-	"github.com/MichaelPalmer1/simple-api-go/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -37,7 +36,7 @@ func (api *FirestoreAPI) Search(req models.Request, key string, values []string)
 	}
 
 	// Filter the response
-	utils.PostProcess(records, user)
+	api.PostProcess(records, user)
 
 	// Create audit log
 	// api.auditLog("SEARCH", req, *user, nil, nil)
