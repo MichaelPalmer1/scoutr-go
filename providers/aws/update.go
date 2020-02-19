@@ -1,7 +1,6 @@
 package aws
 
 import (
-	"github.com/MichaelPalmer1/simple-api-go/lib/filtering"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	"github.com/aws/aws-sdk-go/aws"
@@ -60,11 +59,12 @@ func (api *DynamoAPI) Update(req models.Request, partitionKey map[string]string,
 
 	// Build filters
 	var expr expression.Expression
-	conditions, hasConditions, err := filtering.Filter(user, nil)
+	rawConds, hasConditions, err := api.Filter(&api.Filtering, user, nil)
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
+	conditions := rawConds.(expression.ConditionBuilder)
 
 	// Get key schema
 	keySchema, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
