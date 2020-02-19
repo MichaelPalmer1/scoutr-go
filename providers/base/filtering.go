@@ -152,8 +152,10 @@ func (api *SimpleAPI) MultiFilter(f Filtering, user *models.User, key string, va
 	condition := f.In(key, string(vals))
 
 	if hasValues {
+		// Merge conditions using an AND operation
 		conditions = f.And(conditions, condition)
 	} else {
+		// Initialize condition
 		conditions = condition
 	}
 
