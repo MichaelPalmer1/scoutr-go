@@ -54,12 +54,22 @@ func (api *SimpleAPI) Filter(f Filtering, user *models.User, filters map[string]
 				}
 			} else if value, ok := item.Value.([]interface{}); ok {
 				// Value is a list of strings
+				// Check that the IN operation is supported
 				if _, ok := f.Operations()["in"]; !ok {
 					return nil, false, &models.BadRequest{
 						Message: "Failed to generate user condition - IN operation is not supported by this provider.",
 					}
 				}
-				condition := f.In(item.Field, value)
+
+				// Values are expected to be in JSON-encoded string
+				vals, err := json.Marshal(value)
+				if err != nil {
+					log.Errorln("Failed to marshal user filter data")
+					return nil, false, err
+				}
+
+				// Build condition
+				condition := f.In(item.Field, string(vals))
 				initialized = true
 				if idx == 0 {
 					conditions = condition
@@ -123,7 +133,7 @@ func (api *SimpleAPI) Filter(f Filtering, user *models.User, filters map[string]
 		}
 	}
 
-	return conditions, true, nil
+	return conditions, initialized, nil
 }
 
 // MultiFilter : Build multi-filter using the IN operator to search a key for 1 or more values

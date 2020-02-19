@@ -9,7 +9,7 @@ import (
 )
 
 // Search : Search items in the table
-func (api *DynamoAPI) Search(req models.Request, key string, values []string) ([]models.Record, error) {
+func (api DynamoAPI) Search(req models.Request, key string, values []string) ([]models.Record, error) {
 	// Get the user
 	user, err := api.InitializeRequest(req)
 	if err != nil {
@@ -42,7 +42,7 @@ func (api *DynamoAPI) Search(req models.Request, key string, values []string) ([
 	data, err := scan(&input, api.Client)
 	if err != nil {
 		log.Errorln("Error while attempting to list records", err)
-		return nil, nil
+		return nil, err
 	}
 
 	// Filter the response

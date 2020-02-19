@@ -12,7 +12,7 @@ import (
 )
 
 // ListAuditLogs : List audit logs
-func (api *DynamoAPI) ListAuditLogs(req models.Request, pathParams map[string]string, queryParams map[string]string) ([]models.AuditLog, error) {
+func (api DynamoAPI) ListAuditLogs(req models.Request, pathParams map[string]string, queryParams map[string]string) ([]models.AuditLog, error) {
 	// Only fetch audit logs if the table is configured
 	if api.Config.AuditTable == "" {
 		return nil, &models.NotFound{
@@ -52,8 +52,8 @@ func (api *DynamoAPI) ListAuditLogs(req models.Request, pathParams map[string]st
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
-	conditions := rawConds.(expression.ConditionBuilder)
 	if hasConditions {
+		conditions := rawConds.(expression.ConditionBuilder)
 		expr, err := expression.NewBuilder().WithFilter(conditions).Build()
 		if err != nil {
 			return nil, err
@@ -69,14 +69,14 @@ func (api *DynamoAPI) ListAuditLogs(req models.Request, pathParams map[string]st
 	data, err := scanAudit(&input, api.Client)
 	if err != nil {
 		log.Errorln("Error while attempting to list records", err)
-		return nil, nil
+		return nil, err
 	}
 
 	return data, nil
 }
 
 // auditLog : Creates an audit log
-func (api *DynamoAPI) auditLog(action string, request models.Request, user models.User, resource *map[string]string, changes *map[string]string) error {
+func (api DynamoAPI) auditLog(action string, request models.Request, user models.User, resource *map[string]string, changes *map[string]string) error {
 	// Only send audit logs if the table is configured
 	if api.Config.AuditTable == "" {
 		return nil

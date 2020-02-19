@@ -9,7 +9,7 @@ import (
 )
 
 // Get : Get an item from the table
-func (api *DynamoAPI) Get(req models.Request, id string) (models.Record, error) {
+func (api DynamoAPI) Get(req models.Request, id string) (models.Record, error) {
 	var partitionKey string
 
 	// Get the user
@@ -42,7 +42,14 @@ func (api *DynamoAPI) Get(req models.Request, id string) (models.Record, error) 
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
-	conditions := rawConds.(expression.ConditionBuilder)
+
+	// Cast to condition builder
+	var conditions expression.ConditionBuilder
+	if hasConditions {
+		conditions = rawConds.(expression.ConditionBuilder)
+	}
+
+	// Build key condition
 	keyCondition := expression.Name(partitionKey).Equal(expression.Value(id))
 	if hasConditions {
 		conditions = conditions.And(keyCondition)
@@ -68,7 +75,7 @@ func (api *DynamoAPI) Get(req models.Request, id string) (models.Record, error) 
 	data, err := scan(&input, api.Client)
 	if err != nil {
 		log.Errorln("Error while attempting to list records", err)
-		return nil, nil
+		return nil, err
 	}
 
 	// Filter the response

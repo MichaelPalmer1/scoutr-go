@@ -12,7 +12,7 @@ import (
 
 // InitializeRequest : Given a request, get the corresponding user and perform
 // user and request validation.
-func (api *DynamoAPI) InitializeRequest(req models.Request) (*models.User, error) {
+func (api DynamoAPI) InitializeRequest(req models.Request) (*models.User, error) {
 	user, err := api.GetUser(req.User.ID, req.User.Data)
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func (api *DynamoAPI) InitializeRequest(req models.Request) (*models.User, error
 }
 
 // GetUser : Fetch the user from the backend
-func (api *DynamoAPI) GetUser(id string, userData *models.UserData) (*models.User, error) {
+func (api DynamoAPI) GetUser(id string, userData *models.UserData) (*models.User, error) {
 	isUser := true
 	user := models.User{ID: id}
 

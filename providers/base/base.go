@@ -6,19 +6,34 @@ import (
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
 	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/MichaelPalmer1/simple-api-go/utils"
 	log "github.com/sirupsen/logrus"
 )
 
 type BaseAPI interface {
+	GetConfig() config.Config
+	CanAccessEndpoint(string, string, *models.User, *models.Request) bool
 	InitializeRequest(models.Request) (*models.User, error)
-	GetUser(string, *models.UserData, []string) (*models.User, error)
+	GetUser(string, *models.UserData) (*models.User, error)
+	Create(models.Request, map[string]string, map[string]utils.FieldValidation) error
+	Update(models.Request, map[string]string, map[string]string, map[string]utils.FieldValidation, string) (interface{}, error)
+	Get(models.Request, string) (models.Record, error)
 	List(models.Request) ([]models.Record, error)
+	ListUniqueValues(models.Request, string) ([]string, error)
+	ListAuditLogs(models.Request, map[string]string, map[string]string) ([]models.AuditLog, error)
+	History(models.Request, string, string, map[string]string, []string) ([]models.History, error)
+	Search(models.Request, string, []string) ([]models.Record, error)
 }
 
 type SimpleAPI struct {
 	BaseAPI
 	Filtering Filtering
 	Config    config.Config
+}
+
+// GetConfig : Return config
+func (api *SimpleAPI) GetConfig() config.Config {
+	return api.Config
 }
 
 // UserIdentifier : Generate a user identifier for logs
@@ -31,7 +46,7 @@ func (api *SimpleAPI) CanAccessEndpoint(method string, path string, user *models
 	var err error
 	if request != nil {
 		// Fetch the user
-		user, err = api.GetUser(request.User.ID, request.User.Data, []string{})
+		user, err = api.GetUser(request.User.ID, request.User.Data)
 		if err != nil {
 			log.Errorln("Failed to fetch user", err)
 			return false

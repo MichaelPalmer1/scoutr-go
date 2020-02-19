@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
-	dynamo "github.com/MichaelPalmer1/simple-api-go/providers/aws"
+	"github.com/MichaelPalmer1/simple-api-go/providers/base"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -35,8 +35,7 @@ func HTTPErrorHandler(err error, w http.ResponseWriter) bool {
 }
 
 // InitHTTPServer : Initialize the HTTP server
-func InitHTTPServer(api dynamo.DynamoAPI, partitionKey string, primaryListEndpoint string, historyActions []string) (*httprouter.Router, error) {
-
+func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint string, historyActions []string) (*httprouter.Router, error) {
 	// Format primary endpoint
 	if !strings.HasPrefix(primaryListEndpoint, "/") {
 		primaryListEndpoint = "/" + primaryListEndpoint
@@ -53,15 +52,23 @@ func InitHTTPServer(api dynamo.DynamoAPI, partitionKey string, primaryListEndpoi
 		pathParams := make(map[string]string)
 		queryParams := make(map[string]string)
 
+		// Parse groups
+		groupString := req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCGroupClaim)
+		groups := []string{}
+		if strings.Contains(groupString, ",") {
+			groups = strings.Split(groupString, ",")
+		}
+
+		// Generate user data
 		userData := models.UserData{
-			Name:     "Michael",
-			Email:    "Michael@Palmer.com",
-			Username: "michael",
-			Groups:   []string{"group1", "group2"},
+			Name:     req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCNameClaim),
+			Email:    req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCEmailClaim),
+			Username: req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCUsernameClaim),
+			Groups:   groups,
 		}
 
 		requestUser := models.RequestUser{
-			ID:   "michael",
+			ID:   userData.Username,
 			Data: &userData,
 		}
 
@@ -139,7 +146,7 @@ func InitHTTPServer(api dynamo.DynamoAPI, partitionKey string, primaryListEndpoi
 
 	userInfo := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		// Lookup information about the user
-		user := GetUserFromOIDC(req, api.Config)
+		user := GetUserFromOIDC(req, api.GetConfig())
 
 		// Marshal data and write to output
 		data, err := json.Marshal(map[string]string{
@@ -161,7 +168,7 @@ func InitHTTPServer(api dynamo.DynamoAPI, partitionKey string, primaryListEndpoi
 
 	userHasPermission := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		// Get user
-		requestUser := GetUserFromOIDC(req, api.Config)
+		requestUser := GetUserFromOIDC(req, api.GetConfig())
 
 		// Build the request model
 		request := models.Request{

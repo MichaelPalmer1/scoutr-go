@@ -8,7 +8,7 @@ import (
 )
 
 // Update : Update an item
-func (api *FirestoreAPI) Update(req models.Request, partitionKey map[string]string, item map[string]string, validation map[string]utils.FieldValidation, auditAction string) (interface{}, error) {
+func (api FirestoreAPI) Update(req models.Request, partitionKey map[string]string, item map[string]string, validation map[string]utils.FieldValidation, auditAction string) (interface{}, error) {
 	var output interface{}
 
 	// Get the user

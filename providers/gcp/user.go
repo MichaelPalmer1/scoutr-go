@@ -10,7 +10,7 @@ import (
 
 // InitializeRequest : Given a request, get the corresponding user and perform
 // user and request validation.
-func (api *FirestoreAPI) InitializeRequest(req models.Request) (*models.User, error) {
+func (api FirestoreAPI) InitializeRequest(req models.Request) (*models.User, error) {
 	user, err := api.GetUser(req.User.ID, req.User.Data)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func (api *FirestoreAPI) InitializeRequest(req models.Request) (*models.User, er
 	return user, nil
 }
 
-func (api *FirestoreAPI) GetUser(id string, userData *models.UserData) (*models.User, error) {
+func (api FirestoreAPI) GetUser(id string, userData *models.UserData) (*models.User, error) {
 	isUser := true
 	user := models.User{ID: id}
 	authCollection := api.Client.Collection(api.Config.AuthTable)

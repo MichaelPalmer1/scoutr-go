@@ -4,10 +4,12 @@ import (
 	"cloud.google.com/go/firestore"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Search : Search items in the table
-func (api *FirestoreAPI) Search(req models.Request, key string, values []string) ([]models.Record, error) {
+func (api FirestoreAPI) Search(req models.Request, key string, values []string) ([]models.Record, error) {
 	// Get the user
 	user, err := api.InitializeRequest(req)
 	if err != nil {
@@ -29,8 +31,22 @@ func (api *FirestoreAPI) Search(req models.Request, key string, values []string)
 	query := filters.(firestore.Query)
 	data, err := query.Documents(api.context).GetAll()
 	if err != nil {
-		log.Errorln("Error while attempting to list records", err)
-		return nil, nil
+		// Attempt to convert error to a status code
+		code, ok := status.FromError(err)
+
+		// Check if the status conversion was successful
+		if ok {
+			switch code.Code() {
+			case codes.InvalidArgument:
+				// Return bad request on invalid argument errors
+				return nil, &models.BadRequest{
+					Message: code.Message(),
+				}
+			}
+		}
+
+		// Fallback to just returning the raw error
+		return nil, err
 	}
 
 	// TODO: fix this, this feels hacky...and not optimal

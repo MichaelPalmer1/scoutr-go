@@ -11,7 +11,7 @@ import (
 )
 
 // Update : Update an item
-func (api *DynamoAPI) Update(req models.Request, partitionKey map[string]string, item map[string]string, validation map[string]utils.FieldValidation, auditAction string) (interface{}, error) {
+func (api DynamoAPI) Update(req models.Request, partitionKey map[string]string, item map[string]string, validation map[string]utils.FieldValidation, auditAction string) (interface{}, error) {
 	var output interface{}
 
 	// Get the user
@@ -64,7 +64,12 @@ func (api *DynamoAPI) Update(req models.Request, partitionKey map[string]string,
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
-	conditions := rawConds.(expression.ConditionBuilder)
+
+	// Cast to condition builder
+	var conditions expression.ConditionBuilder
+	if hasConditions {
+		conditions = rawConds.(expression.ConditionBuilder)
+	}
 
 	// Get key schema
 	keySchema, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{

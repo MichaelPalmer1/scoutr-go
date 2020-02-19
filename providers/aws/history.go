@@ -9,7 +9,7 @@ import (
 )
 
 // History : Generate record history
-func (api *DynamoAPI) History(req models.Request, key string, value string, queryParams map[string]string, actions []string) ([]models.History, error) {
+func (api DynamoAPI) History(req models.Request, key string, value string, queryParams map[string]string, actions []string) ([]models.History, error) {
 	var history []models.History
 
 	// Only fetch audit logs if the table is configured

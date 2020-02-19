@@ -8,7 +8,7 @@ import (
 )
 
 // List : List all records
-func (api *FirestoreAPI) List(req models.Request) ([]models.Record, error) {
+func (api FirestoreAPI) List(req models.Request) ([]models.Record, error) {
 	// Get the user
 	user, err := api.InitializeRequest(req)
 	if err != nil {
@@ -32,16 +32,20 @@ func (api *FirestoreAPI) List(req models.Request) ([]models.Record, error) {
 	}
 
 	// Build filters
+	collection := api.Client.Collection(api.Config.DataTable)
 	f := FirestoreFiltering{
-		Query: api.Client.Collection(api.Config.DataTable).Query,
+		Query: collection.Query,
 	}
 	filters, _, err := api.Filter(&f, user, req.QueryParams)
 	if err != nil {
 		return nil, err
 	}
+	query := collection.Query
+	if filters != nil {
+		query = filters.(firestore.Query)
+	}
 
 	// Download the data
-	query := filters.(firestore.Query)
 	docs, err := query.Documents(api.context).GetAll()
 	if err != nil {
 		// Attempt to convert error to a status code

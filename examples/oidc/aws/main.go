@@ -6,11 +6,22 @@ import (
 	"os/user"
 	"path/filepath"
 
+	"github.com/MichaelPalmer1/simple-api-go/config"
 	"github.com/MichaelPalmer1/simple-api-go/providers"
+	dynamo "github.com/MichaelPalmer1/simple-api-go/providers/aws"
+	"github.com/MichaelPalmer1/simple-api-go/providers/base"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	log "github.com/sirupsen/logrus"
 )
+
+func init() {
+	api = dynamo.DynamoAPI{
+		SimpleAPI: &base.SimpleAPI{
+			Config: config.Config{},
+		},
+	}
+}
 
 func main() {
 	// Command line arguments

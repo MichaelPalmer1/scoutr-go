@@ -11,7 +11,7 @@ import (
 )
 
 // List : Lists all items in a table
-func (api *DynamoAPI) List(req models.Request) ([]models.Record, error) {
+func (api DynamoAPI) List(req models.Request) ([]models.Record, error) {
 	// Get the user
 	user, err := api.InitializeRequest(req)
 	if err != nil {
@@ -50,8 +50,8 @@ func (api *DynamoAPI) List(req models.Request) ([]models.Record, error) {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
-	conditions := rawConds.(expression.ConditionBuilder)
 	if hasConditions {
+		conditions := rawConds.(expression.ConditionBuilder)
 		expr, err := expression.NewBuilder().WithFilter(conditions).Build()
 		if err != nil {
 			return nil, err
@@ -67,7 +67,7 @@ func (api *DynamoAPI) List(req models.Request) ([]models.Record, error) {
 	data, err := scan(&input, api.Client)
 	if err != nil {
 		log.Errorln("Error while attempting to list records", err)
-		return nil, nil
+		return nil, err
 	}
 
 	// Filter the response
@@ -80,7 +80,7 @@ func (api *DynamoAPI) List(req models.Request) ([]models.Record, error) {
 }
 
 // ListUniqueValues : Lists unique values in a table
-func (api *DynamoAPI) ListUniqueValues(req models.Request, uniqueKey string) ([]string, error) {
+func (api DynamoAPI) ListUniqueValues(req models.Request, uniqueKey string) ([]string, error) {
 	// Get the user
 	user, err := api.InitializeRequest(req)
 	if err != nil {
@@ -104,7 +104,12 @@ func (api *DynamoAPI) ListUniqueValues(req models.Request, uniqueKey string) ([]
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
-	conditions := rawConds.(expression.ConditionBuilder)
+
+	// Cast to condition builder
+	var conditions expression.ConditionBuilder
+	if hasConditions {
+		conditions = rawConds.(expression.ConditionBuilder)
+	}
 
 	// Build unique key condition
 	condition := expression.Name(uniqueKey).AttributeExists()
@@ -135,7 +140,7 @@ func (api *DynamoAPI) ListUniqueValues(req models.Request, uniqueKey string) ([]
 	data, err := scan(&input, api.Client)
 	if err != nil {
 		log.Errorln("Error while attempting to list records", err)
-		return nil, nil
+		return nil, err
 	}
 
 	// Filter the response

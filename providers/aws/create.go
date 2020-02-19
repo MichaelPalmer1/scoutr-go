@@ -11,7 +11,7 @@ import (
 )
 
 // Create : Create an item
-func (api *DynamoAPI) Create(req models.Request, item map[string]string, validation map[string]utils.FieldValidation) error {
+func (api DynamoAPI) Create(req models.Request, item map[string]string, validation map[string]utils.FieldValidation) error {
 	// Get the user
 	user, err := api.InitializeRequest(req)
 	if err != nil {
@@ -58,8 +58,13 @@ func (api *DynamoAPI) Create(req models.Request, item map[string]string, validat
 		return err
 	}
 
+	// Cast to condition builder
+	var conditions expression.ConditionBuilder
+	if hasConditions {
+		conditions = rawConds.(expression.ConditionBuilder)
+	}
+
 	// Append key schema conditions
-	conditions := rawConds.(expression.ConditionBuilder)
 	partitionKey := ""
 	for _, schema := range output.Table.KeySchema {
 		if *schema.KeyType == "HASH" {

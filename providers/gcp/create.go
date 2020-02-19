@@ -4,10 +4,12 @@ import (
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/utils"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Create : Create an item
-func (api *FirestoreAPI) Create(req models.Request, item map[string]string, validation map[string]utils.FieldValidation) error {
+func (api FirestoreAPI) Create(req models.Request, item map[string]string, validation map[string]utils.FieldValidation) error {
 	// Get the user
 	_, err := api.InitializeRequest(req)
 	if err != nil {
@@ -32,15 +34,25 @@ func (api *FirestoreAPI) Create(req models.Request, item map[string]string, vali
 
 	_, err = doc.Create(api.context, item)
 	if err != nil {
-		log.Errorln("Error while attempting to create item", err)
+		// Attempt to convert error to a status code
+		code, ok := status.FromError(err)
 
-		// Check if this was a conditional check failure
-		// if _, ok := err.(*dynamodb.ConditionalCheckFailedException); ok {
-		// 	return &models.BadRequest{
-		// 		Message: "Item already exists or you do not have permission to create it",
-		// 	}
-		// }
+		// Check if the status conversion was successful
+		if ok {
+			switch code.Code() {
+			case codes.AlreadyExists:
+				return &models.BadRequest{
+					Message: "Item already exists",
+				}
+			case codes.InvalidArgument:
+				// Return bad request on invalid argument errors
+				return &models.BadRequest{
+					Message: code.Message(),
+				}
+			}
+		}
 
+		// Fallback to just returning the raw error
 		return err
 	}
 
