@@ -59,7 +59,7 @@ func (api FirestoreAPI) Search(req models.Request, key string, values []string) 
 	api.PostProcess(records, user)
 
 	// Create audit log
-	// api.auditLog("SEARCH", req, *user, nil, nil)
+	api.auditLog("SEARCH", req, *user, nil, nil)
 
 	return records, nil
 }

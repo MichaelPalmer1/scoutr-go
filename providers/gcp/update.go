@@ -12,7 +12,7 @@ func (api FirestoreAPI) Update(req models.Request, partitionKey map[string]strin
 	var output interface{}
 
 	// Get the user
-	_, err := api.InitializeRequest(req)
+	user, err := api.InitializeRequest(req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err
@@ -59,7 +59,7 @@ func (api FirestoreAPI) Update(req models.Request, partitionKey map[string]strin
 	// dynamodbattribute.UnmarshalMap(updatedItem.Attributes, &output)
 
 	// Create audit log
-	// api.auditLog("UPDATE", req, *user, &partitionKey, &item)
+	api.auditLog("UPDATE", req, *user, &partitionKey, &item)
 
 	return output, nil
 }

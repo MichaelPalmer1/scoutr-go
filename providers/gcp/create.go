@@ -11,7 +11,7 @@ import (
 // Create : Create an item
 func (api FirestoreAPI) Create(req models.Request, item map[string]string, validation map[string]utils.FieldValidation) error {
 	// Get the user
-	_, err := api.InitializeRequest(req)
+	user, err := api.InitializeRequest(req)
 	if err != nil {
 		// Bad user - pass the error through
 		return err
@@ -57,7 +57,7 @@ func (api FirestoreAPI) Create(req models.Request, item map[string]string, valid
 	}
 
 	// Create audit log
-	// api.auditLog("CREATE", req, *user, &map[string]string{partitionKey: item[partitionKey]}, nil)
+	api.auditLog("CREATE", req, *user, &map[string]string{api.Config.PrimaryKey: doc.ID}, nil)
 
 	return nil
 }

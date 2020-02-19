@@ -75,5 +75,8 @@ func (api FirestoreAPI) List(req models.Request) ([]models.Record, error) {
 	// Filter the response
 	api.PostProcess(records, user)
 
+	// Create audit log
+	api.auditLog("LIST", req, *user, nil, nil)
+
 	return records, nil
 }

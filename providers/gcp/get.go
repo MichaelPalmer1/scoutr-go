@@ -74,8 +74,8 @@ func (api FirestoreAPI) Get(req models.Request, id string) (models.Record, error
 		}
 	}
 
-	// TODO: Create audit log
-	// api.auditLog("GET", req, *user, &map[string]string{api.Config.PrimaryKey: id}, nil)
+	// Create audit log
+	api.auditLog("GET", req, *user, &map[string]string{api.Config.PrimaryKey: id}, nil)
 
 	return records[0], nil
 }
