@@ -12,8 +12,9 @@ import (
 // FirestoreAPI : API, based off of SimpleAPI, used to talk to Google Firestore
 type FirestoreAPI struct {
 	*base.SimpleAPI
-	Client  *firestore.Client
-	context context.Context
+	Filtering FirestoreFiltering
+	Client    *firestore.Client
+	context   context.Context
 }
 
 // Init : Initialize the Firestore client

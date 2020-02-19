@@ -12,7 +12,8 @@ import (
 // DynamoAPI : API, based off of SimpleAPI, used to talk to AWS DynamoDB
 type DynamoAPI struct {
 	*base.SimpleAPI
-	Client *dynamodb.DynamoDB
+	Client    *dynamodb.DynamoDB
+	Filtering DynamoFiltering
 }
 
 // Init : Initialize the Dynamo client

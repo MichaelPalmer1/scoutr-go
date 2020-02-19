@@ -2,134 +2,104 @@ package aws
 
 import (
 	"encoding/json"
-	"reflect"
-	"regexp"
 
-	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/MichaelPalmer1/simple-api-go/providers/base"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-	log "github.com/sirupsen/logrus"
 )
 
-// Filter : Build a filter
-func Filter(user *models.User, filters map[string]string) (expression.ConditionBuilder, bool, error) {
-	var conditions expression.ConditionBuilder
-	initialized := false
-	re := regexp.MustCompile(`^(.+)__(in|contains|notcontains|startswith|ne|gt|lt|ge|le|between|exists)$`)
-
-	// Build user filters
-	if user != nil {
-		for idx, item := range user.FilterFields {
-			attr := expression.Name(item.Field)
-			if value, ok := item.Value.(string); ok {
-				// Value is a single string
-				condition := attr.Equal(expression.Value(value))
-				initialized = true
-				if idx == 0 {
-					conditions = condition
-				} else {
-					conditions = conditions.And(condition)
-				}
-			} else if value, ok := item.Value.([]interface{}); ok {
-				// Value is a list of strings
-				condition := attr.In(expression.Value(value))
-				initialized = true
-				if idx == 0 {
-					conditions = condition
-				} else {
-					conditions = conditions.And(condition)
-				}
-			} else {
-				log.Warnln("Received value of unknown type", item.Value)
-				log.Warnln("Type", reflect.TypeOf(item.Value))
-				continue
-			}
-		}
-	}
-
-	// Build specified filters
-	for key, value := range filters {
-		condition := expression.ConditionBuilder{}
-
-		// Check for magic operator matches
-		matches := re.FindAllStringSubmatch(key, -1)
-		if len(matches) > 0 && len(matches[0]) == 3 {
-			key = matches[0][1]
-			operation := matches[0][2]
-			attr := expression.Name(key)
-
-			// Perform filter based on the desired magic operator
-			switch operation {
-			case "in":
-				var valueList []string
-				json.Unmarshal([]byte(value), &valueList)
-				condition = attr.In(expression.Value(valueList))
-			// case "notin":
-			// 	var valueList []string
-			// 	json.Unmarshal([]byte(value), &valueList)
-			// 	condition = expression.Not(attr.In(expression.Value(valueList)))
-			case "contains":
-				condition = attr.Contains(value)
-			case "notcontains":
-				condition = expression.Not(attr.Contains(value))
-			case "exists":
-				if value == "true" {
-					condition = attr.AttributeExists()
-				} else if value == "false" {
-					condition = attr.AttributeNotExists()
-				} else {
-					continue
-				}
-			case "startswith":
-				condition = attr.BeginsWith(value)
-			case "ne":
-				condition = attr.NotEqual(expression.Value(value))
-			case "between":
-				var valueList []string
-				json.Unmarshal([]byte(value), &valueList)
-				condition = attr.Between(expression.Value(valueList[0]), expression.Value(valueList[1]))
-			case "gt":
-				condition = attr.GreaterThan(expression.Value(value))
-			case "lt":
-				condition = attr.LessThan(expression.Value(value))
-			case "ge":
-				condition = attr.GreaterThanEqual(expression.Value(value))
-			case "le":
-				condition = attr.LessThanEqual(expression.Value(value))
-			default:
-				return conditions, false, &models.BadRequest{
-					Message: "Unsupported magic operator",
-				}
-			}
-		} else {
-			condition = expression.Name(key).Equal(expression.Value(value))
-		}
-
-		if initialized {
-			conditions = conditions.And(condition)
-		} else {
-			conditions = condition
-			initialized = true
-		}
-	}
-
-	return conditions, initialized, nil
+type DynamoFiltering struct {
+	base.Filtering
 }
 
-// MultiFilter : Perform a filter with multiple values
-func MultiFilter(user *models.User, key string, values []string) (expression.ConditionBuilder, error) {
-	conditions, hasValues, err := Filter(user, nil)
-	if err != nil {
-		return conditions, err
+func (f *DynamoFiltering) Operations() base.OperationMap {
+	return base.OperationMap{
+		"startswith":  f.StartsWith,
+		"ne":          f.NotEquals,
+		"contains":    f.Contains,
+		"notcontains": f.NotContains,
+		"exists":      f.Exists,
+		"gt":          f.GreaterThan,
+		"lt":          f.LessThan,
+		"ge":          f.GreaterThanEqual,
+		"le":          f.LessThanEqual,
+		"between":     f.Between,
+		// "in":          f.In,
 	}
+}
 
-	// Build the condition
-	condition := expression.Name(key).In(expression.Value(values))
+// And : Takes two conditions and performs an AND operation on them
+func (f *DynamoFiltering) And(conditions, condition interface{}) interface{} {
+	return expression.And(conditions.(expression.ConditionBuilder), condition.(expression.ConditionBuilder))
+}
 
-	if hasValues {
-		conditions = conditions.And(condition)
+// StartsWith : Find all records that contain items that start with a specific value
+func (f *DynamoFiltering) StartsWith(key string, value interface{}) interface{} {
+	return expression.Name(key).BeginsWith(value.(string))
+}
+
+// Equals : Standard equals operation
+func (f *DynamoFiltering) Equals(key string, value interface{}) interface{} {
+	return expression.Name(key).Equal(expression.Value(value))
+}
+
+// NotEquals : Standard not equals operation
+func (f *DynamoFiltering) NotEquals(key string, value interface{}) interface{} {
+	return expression.Name(key).NotEqual(expression.Value(value))
+}
+
+// Contains : Check if a value contains a string
+func (f *DynamoFiltering) Contains(key string, value interface{}) interface{} {
+	return expression.Name(key).Contains(value.(string))
+}
+
+// NotContains : Check for values that do not contain a string
+func (f *DynamoFiltering) NotContains(key string, value interface{}) interface{} {
+	return expression.Not(expression.Name(key).Contains(value.(string)))
+}
+
+// Exists : Checks if an attribute exists. Only accepts true/false values. Returns nil for all other values.
+func (f *DynamoFiltering) Exists(key string, value interface{}) interface{} {
+	attr := expression.Name(key)
+	if value == "true" {
+		return attr.AttributeExists()
+	} else if value == "false" {
+		return attr.AttributeNotExists()
 	} else {
-		conditions = condition
+		return nil
 	}
+}
 
-	return conditions, nil
+// GreaterThan : Check if a value is greater than a string
+func (f *DynamoFiltering) GreaterThan(key string, value interface{}) interface{} {
+	return expression.Name(key).GreaterThan(expression.Value(value))
+}
+
+// LessThan : Check if a value is greater than a string
+func (f *DynamoFiltering) LessThan(key string, value interface{}) interface{} {
+	return expression.Name(key).LessThan(expression.Value(value))
+}
+
+// GreaterThanEqual : Check if a value is greater than a string
+func (f *DynamoFiltering) GreaterThanEqual(key string, value interface{}) interface{} {
+	return expression.Name(key).GreaterThanEqual(expression.Value(value))
+}
+
+// LessThanEqual : Check if a value is greater than a string
+func (f *DynamoFiltering) LessThanEqual(key string, value interface{}) interface{} {
+	return expression.Name(key).LessThanEqual(expression.Value(value))
+}
+
+// Between : Check for records that are between a low and high value
+func (f *DynamoFiltering) Between(key string, value interface{}) interface{} {
+	var valueList []string
+	json.Unmarshal([]byte(value.(string)), &valueList)
+	return expression.Name(key).Between(expression.Value(valueList[0]), expression.Value(valueList[1]))
+}
+
+// In : Find all records with a list of values
+func (f *DynamoFiltering) In(key string, values interface{}) interface{} {
+	// TODO: Some reason, this operator does not seem to work right in Go...
+	var valueList []string
+	json.Unmarshal([]byte(values.(string)), &valueList)
+	return expression.Name(key).In(expression.Value(valueList))
 }

@@ -12,4 +12,5 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/ulule/deepcopier v0.0.0-20200117111125-792cfb847af8 // indirect
 	google.golang.org/api v0.17.0
+	google.golang.org/grpc v1.27.0
 )

@@ -17,7 +17,8 @@ type BaseAPI interface {
 
 type SimpleAPI struct {
 	BaseAPI
-	Config config.Config
+	Filtering Filtering
+	Config    config.Config
 }
 
 // UserIdentifier : Generate a user identifier for logs

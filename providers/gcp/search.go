@@ -1,6 +1,7 @@
 package gcp
 
 import (
+	"cloud.google.com/go/firestore"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	log "github.com/sirupsen/logrus"
 )
@@ -14,15 +15,18 @@ func (api *FirestoreAPI) Search(req models.Request, key string, values []string)
 		return nil, err
 	}
 
-	// TODO: Build filters
-	collection := api.Client.Collection(api.Config.DataTable)
-	query, err := multiFilter(user, collection, key, values)
+	// Build filters
+	f := FirestoreFiltering{
+		Query: api.Client.Collection(api.Config.DataTable).Query,
+	}
+	filters, err := api.MultiFilter(&f, user, key, values)
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
 
 	// Download the data
+	query := filters.(firestore.Query)
 	data, err := query.Documents(api.context).GetAll()
 	if err != nil {
 		log.Errorln("Error while attempting to list records", err)

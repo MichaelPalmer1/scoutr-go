@@ -3,7 +3,6 @@ package aws
 import (
 	"sort"
 
-	"github.com/MichaelPalmer1/simple-api-go/lib/filtering"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -46,11 +45,12 @@ func (api *DynamoAPI) List(req models.Request) ([]models.Record, error) {
 	}
 
 	// Build filters
-	conditions, hasConditions, err := filtering.Filter(user, params)
+	rawConds, hasConditions, err := api.Filter(&api.Filtering, user, params)
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
+	conditions := rawConds.(expression.ConditionBuilder)
 	if hasConditions {
 		expr, err := expression.NewBuilder().WithFilter(conditions).Build()
 		if err != nil {
@@ -99,11 +99,12 @@ func (api *DynamoAPI) ListUniqueValues(req models.Request, uniqueKey string) ([]
 	}
 
 	// Build filters
-	conditions, hasConditions, err := filtering.Filter(user, params)
+	rawConds, hasConditions, err := api.Filter(&api.Filtering, user, params)
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
+	conditions := rawConds.(expression.ConditionBuilder)
 
 	// Build unique key condition
 	condition := expression.Name(uniqueKey).AttributeExists()

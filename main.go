@@ -83,7 +83,13 @@ func init() {
 	request = models.Request{
 		QueryParams: map[string]string{
 			"value": `hello`,
-			// "type__in": `[1,2,3,4,5,6,7,8,9,10]`,
+			// "type__ge":  "test",
+			// "name__in":  `["ff6", "f"]`,
+			"value__gt": "a",
+			"value__lt": "z",
+			// "key__ge":        "t",
+			"value__le":      "v",
+			"value__between": `["c", "m"]`,
 		},
 		PathParams: map[string]string{},
 		Method:     "GET",
@@ -103,6 +109,6 @@ func init() {
 }
 
 func main() {
-	// google()
-	amazon()
+	google()
+	// amazon()
 }
