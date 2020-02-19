@@ -10,13 +10,18 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// OperationMap : Map of magic operator to a callable to perform the filter
 type OperationMap map[string]func(string, interface{}) interface{}
 
+// Filtering : Interface used to generalize the filter logic across multiple providers
 type Filtering interface {
+	// Implementation required by inheriting structs
 	Operations() OperationMap
 	And(interface{}, interface{}) interface{}
-	StartsWith(string, interface{}) interface{}
 	Equals(string, interface{}) interface{}
+
+	// Optional
+	StartsWith(string, interface{}) interface{}
 	NotEquals(string, interface{}) interface{}
 	Contains(string, interface{}) interface{}
 	NotContains(string, interface{}) interface{}
@@ -50,7 +55,7 @@ func (api *SimpleAPI) Filter(f Filtering, user *models.User, filters map[string]
 			} else if value, ok := item.Value.([]interface{}); ok {
 				// Value is a list of strings
 				if _, ok := f.Operations()["in"]; !ok {
-					return conditions, false, &models.BadRequest{
+					return nil, false, &models.BadRequest{
 						Message: "Failed to generate user condition - IN operation is not supported by this provider.",
 					}
 				}

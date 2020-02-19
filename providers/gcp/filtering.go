@@ -12,6 +12,7 @@ type FirestoreFiltering struct {
 	Query firestore.Query
 }
 
+// Operations : Map of supported operations for this filter provider
 func (f *FirestoreFiltering) Operations() base.OperationMap {
 	return base.OperationMap{
 		"gt":      f.GreaterThan,

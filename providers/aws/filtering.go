@@ -11,6 +11,7 @@ type DynamoFiltering struct {
 	base.Filtering
 }
 
+// Operations : Map of supported operations for this filter provider
 func (f *DynamoFiltering) Operations() base.OperationMap {
 	return base.OperationMap{
 		"startswith":  f.StartsWith,
