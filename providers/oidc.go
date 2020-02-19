@@ -3,42 +3,32 @@ package providers
 import (
 	"net/http"
 	"strings"
-	"fmt"
 
-	"github.com/MichaelPalmer1/simple-api-go/config"
 	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/MichaelPalmer1/simple-api-go/providers/base"
 )
 
 // GetUserFromOIDC : Get user information from OIDC headers
-func GetUserFromOIDC(req *http.Request, config config.Config) models.RequestUser {
-	data := models.UserData{}
-
-	// Get username
-	if config.OIDCUsernameClaim != "" {
-		data.Username = req.Header.Get(fmt.Sprintf("Oidc-Claim-%s", config.OIDCUsernameClaim))
+func GetUserFromOIDC(req *http.Request, api base.BaseAPI) models.RequestUser {
+	// Parse groups
+	groupString := req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCGroupClaim)
+	groups := []string{}
+	if strings.Contains(groupString, ",") {
+		groups = strings.Split(groupString, ",")
 	}
 
-	// Get name
-	if config.OIDCNameClaim != "" {
-		data.Name = req.Header.Get(fmt.Sprintf("Oidc-Claim-%s", config.OIDCNameClaim))
+	// Generate user data
+	userData := models.UserData{
+		Name:     req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCNameClaim),
+		Email:    req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCEmailClaim),
+		Username: req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCUsernameClaim),
+		Groups:   groups,
 	}
 
-	// Get email
-	if config.OIDCEmailClaim != "" {
-		data.Email = req.Header.Get(fmt.Sprintf("Oidc-Claim-%s", config.OIDCEmailClaim))
+	requestUser := models.RequestUser{
+		ID:   userData.Username,
+		Data: &userData,
 	}
 
-	// Check for groups
-	if config.OIDCGroupClaim != "" {
-		groups := req.Header.Get(fmt.Sprintf("Oidc-Claim-%s", config.OIDCGroupClaim))
-		data.Groups = strings.Split(groups, ",")
-	}
-
-	// Build user object
-	user := models.RequestUser{
-		ID:   data.Username,
-		Data: &data,
-	}
-
-	return user
+	return requestUser
 }

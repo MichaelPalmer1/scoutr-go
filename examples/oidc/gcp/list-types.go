@@ -13,17 +13,7 @@ func listTypes(w http.ResponseWriter, req *http.Request, params httprouter.Param
 	pathParams := make(map[string]string)
 	queryParams := make(map[string]string)
 
-	userData := models.UserData{
-		Name:     "Michael",
-		Email:    "Michael@Palmer.com",
-		Username: "michael",
-		Groups:   []string{"group1", "group2"},
-	}
-
-	requestUser := models.RequestUser{
-		ID:   "michael",
-		Data: &userData,
-	}
+	requestUser := providers.GetUserFromOIDC(req, api)
 
 	// Parse query params
 	for key, values := range req.URL.Query() {

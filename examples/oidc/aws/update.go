@@ -13,9 +13,7 @@ import (
 )
 
 func update(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	requestUser := models.RequestUser{
-		ID: "michael",
-	}
+	requestUser := providers.GetUserFromOIDC(req, api)
 
 	// Parse the request body
 	var body map[string]string

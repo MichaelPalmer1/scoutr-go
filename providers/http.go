@@ -52,25 +52,8 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 		pathParams := make(map[string]string)
 		queryParams := make(map[string]string)
 
-		// Parse groups
-		groupString := req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCGroupClaim)
-		groups := []string{}
-		if strings.Contains(groupString, ",") {
-			groups = strings.Split(groupString, ",")
-		}
-
-		// Generate user data
-		userData := models.UserData{
-			Name:     req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCNameClaim),
-			Email:    req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCEmailClaim),
-			Username: req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCUsernameClaim),
-			Groups:   groups,
-		}
-
-		requestUser := models.RequestUser{
-			ID:   userData.Username,
-			Data: &userData,
-		}
+		// Generate request user
+		requestUser := GetUserFromOIDC(req, api)
 
 		// Parse query params
 		for key, values := range req.URL.Query() {
@@ -108,9 +91,8 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 	}
 
 	search := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		requestUser := models.RequestUser{
-			ID: "michael",
-		}
+		// Generate request user
+		requestUser := GetUserFromOIDC(req, api)
 
 		// Parse the request body
 		var body []string
@@ -146,7 +128,7 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 
 	userInfo := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		// Lookup information about the user
-		user := GetUserFromOIDC(req, api.GetConfig())
+		user := GetUserFromOIDC(req, api)
 
 		// Marshal data and write to output
 		data, err := json.Marshal(map[string]string{
@@ -168,7 +150,7 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 
 	userHasPermission := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		// Get user
-		requestUser := GetUserFromOIDC(req, api.GetConfig())
+		requestUser := GetUserFromOIDC(req, api)
 
 		// Build the request model
 		request := models.Request{
@@ -209,17 +191,7 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 		pathParams := make(map[string]string)
 		queryParams := make(map[string]string)
 
-		userData := models.UserData{
-			Name:     "Michael",
-			Email:    "Michael@Palmer.com",
-			Username: "michael",
-			Groups:   []string{"group1", "group2"},
-		}
-
-		requestUser := models.RequestUser{
-			ID:   "michael",
-			Data: &userData,
-		}
+		requestUser := GetUserFromOIDC(req, api)
 
 		// Parse query params
 		for key, values := range req.URL.Query() {
@@ -258,17 +230,7 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 	history := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		queryParams := make(map[string]string)
 
-		userData := models.UserData{
-			Name:     "Michael",
-			Email:    "Michael@Palmer.com",
-			Username: "michael",
-			Groups:   []string{"group1", "group2"},
-		}
-
-		requestUser := models.RequestUser{
-			ID:   "michael",
-			Data: &userData,
-		}
+		requestUser := GetUserFromOIDC(req, api)
 
 		// Parse query params
 		for key, values := range req.URL.Query() {

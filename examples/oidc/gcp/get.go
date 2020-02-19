@@ -10,9 +10,7 @@ import (
 )
 
 func get(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	requestUser := models.RequestUser{
-		ID: "michael",
-	}
+	requestUser := providers.GetUserFromOIDC(req, api)
 
 	// Build the request model
 	request := models.Request{
