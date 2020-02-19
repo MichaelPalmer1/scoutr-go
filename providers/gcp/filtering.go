@@ -25,6 +25,7 @@ func (f *FirestoreFiltering) Operations() base.OperationMap {
 
 // And : Takes two conditions and performs an AND operation on them
 func (f *FirestoreFiltering) And(conditions, condition interface{}) interface{} {
+	// This is a bit hacky, but the best solution I have for now...
 	return f.Query
 }
 
