@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/helpers"
+	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/julienschmidt/httprouter"
@@ -23,14 +23,21 @@ func update(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 		return
 	}
 
+	// Parse path params
+	pathParams := map[string]string{}
+	for _, item := range params {
+		pathParams[item.Key] = item.Value
+	}
+
 	// Build the request model
 	request := models.Request{
-		User:      requestUser,
-		Method:    req.Method,
-		Path:      req.URL.Path,
-		Body:      body,
-		SourceIP:  req.RemoteAddr,
-		UserAgent: req.UserAgent(),
+		User:       requestUser,
+		Method:     req.Method,
+		Path:       req.URL.Path,
+		PathParams: pathParams,
+		Body:       body,
+		SourceIP:   req.RemoteAddr,
+		UserAgent:  req.UserAgent(),
 	}
 
 	// Get key schema
