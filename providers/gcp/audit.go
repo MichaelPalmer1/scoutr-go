@@ -55,6 +55,9 @@ func (api FirestoreAPI) ListAuditLogs(req models.Request, pathParams map[string]
 		query = filters.(firestore.Query)
 	}
 
+	// Order by time
+	query = query.OrderBy("time", firestore.Desc)
+
 	// Download the data
 	docs, err := query.Documents(api.context).GetAll()
 	if err != nil {
