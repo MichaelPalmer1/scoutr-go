@@ -1,4 +1,4 @@
-package providers
+package helpers
 
 import (
 	"net/http"
@@ -25,10 +25,8 @@ func GetUserFromOIDC(req *http.Request, api base.BaseAPI) models.RequestUser {
 		Groups:   groups,
 	}
 
-	requestUser := models.RequestUser{
+	return models.RequestUser{
 		ID:   userData.Username,
 		Data: &userData,
 	}
-
-	return requestUser
 }

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
-	"github.com/MichaelPalmer1/simple-api-go/providers"
+	"github.com/MichaelPalmer1/simple-api-go/helpers"
 	"github.com/MichaelPalmer1/simple-api-go/providers/base"
 	"github.com/MichaelPalmer1/simple-api-go/providers/gcp"
 	log "github.com/sirupsen/logrus"
@@ -51,7 +51,7 @@ func main() {
 	defer api.Close()
 
 	// Initialize http server
-	router, err := providers.InitHTTPServer(api, "id", "/items/", []string{"CREATE", "UPDATE"})
+	router, err := helpers.InitHTTPServer(api, "id", "/items/", []string{"CREATE", "UPDATE"})
 	if err != nil {
 		panic(err)
 	}

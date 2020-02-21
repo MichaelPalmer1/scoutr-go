@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
-	"github.com/MichaelPalmer1/simple-api-go/providers"
+	"github.com/MichaelPalmer1/simple-api-go/helpers"
 	"github.com/julienschmidt/httprouter"
 )
 
 func update(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	requestUser := providers.GetUserFromOIDC(req, api)
+	requestUser := helpers.GetUserFromOIDC(req, api)
 
 	// Parse the request body
 	var body map[string]string
@@ -39,7 +39,7 @@ func update(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	data, err := api.Update(request, partitionKey, body, validation, "UPDATE")
 
 	// Check for errors in the response
-	if providers.HTTPErrorHandler(err, w) {
+	if helpers.HTTPErrorHandler(err, w) {
 		return
 	}
 

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
-	"github.com/MichaelPalmer1/simple-api-go/providers"
+	"github.com/MichaelPalmer1/simple-api-go/helpers"
 	dynamo "github.com/MichaelPalmer1/simple-api-go/providers/aws"
 	"github.com/MichaelPalmer1/simple-api-go/providers/base"
 	"github.com/aws/aws-sdk-go/aws"
@@ -55,7 +55,7 @@ func main() {
 	})
 
 	// Initialize http server
-	router, err := providers.InitHTTPServer(api, "id", "/items/", []string{"CREATE", "UPDATE"})
+	router, err := helpers.InitHTTPServer(api, "id", "/items/", []string{"CREATE", "UPDATE"})
 	if err != nil {
 		panic(err)
 	}
