@@ -64,6 +64,7 @@ func main() {
 	router.POST("/item/", create)
 	router.GET("/item/:id", get)
 	router.PUT("/item/:id", update)
+	router.DELETE("/item/:id", delete)
 	router.GET("/types/", listTypes)
 
 	// Start the server

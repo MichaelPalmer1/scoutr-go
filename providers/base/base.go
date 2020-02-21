@@ -23,6 +23,7 @@ type BaseAPI interface {
 	ListAuditLogs(models.Request, map[string]string, map[string]string) ([]models.AuditLog, error)
 	History(models.Request, string, string, map[string]string, []string) ([]models.History, error)
 	Search(models.Request, string, []string) ([]models.Record, error)
+	Delete(models.Request, map[string]string) error
 }
 
 type SimpleAPI struct {
