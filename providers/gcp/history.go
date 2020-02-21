@@ -27,7 +27,7 @@ func (api FirestoreAPI) History(req models.Request, key string, value string, qu
 	}
 
 	searchParams := map[string]string{
-		"resource." + key: value,
+		"Resource." + key: value,
 		// "action__in": actions,
 	}
 
