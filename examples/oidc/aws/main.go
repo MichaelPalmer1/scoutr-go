@@ -30,10 +30,10 @@ func main() {
 	flag.StringVar(&api.Config.GroupTable, "group-table", "", "Group table")
 	flag.StringVar(&api.Config.AuditTable, "audit-table", "", "Audit table")
 	flag.IntVar(&api.Config.LogRetentionDays, "log-retention-days", 30, "Days to retain read logs")
-	flag.StringVar(&api.Config.OIDCUsernameClaim, "oidc-username-claim", "Sub", "Username claim from OIDC")
-	flag.StringVar(&api.Config.OIDCNameClaim, "oidc-name-claim", "Name", "Name claim from OIDC")
-	flag.StringVar(&api.Config.OIDCEmailClaim, "oidc-email-claim", "Mail", "Email claim from OIDC")
-	flag.StringVar(&api.Config.OIDCGroupClaim, "oidc-group-claim", "", "Group claim from OIDC")
+	flag.StringVar(&api.Config.OIDCUsernameHeader, "oidc-username-header", "Sub", "Username header from OIDC")
+	flag.StringVar(&api.Config.OIDCNameHeader, "oidc-name-header", "Name", "Name header from OIDC")
+	flag.StringVar(&api.Config.OIDCEmailHeader, "oidc-email-header", "Mail", "Email header from OIDC")
+	flag.StringVar(&api.Config.OIDCGroupHeader, "oidc-group-header", "", "Group header from OIDC")
 	flag.Parse()
 
 	// Make sure required fields are provided

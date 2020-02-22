@@ -11,7 +11,7 @@ import (
 // GetUserFromOIDC : Get user information from OIDC headers
 func GetUserFromOIDC(req *http.Request, api base.BaseAPI) models.RequestUser {
 	// Parse groups
-	groupString := req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCGroupClaim)
+	groupString := req.Header.Get(api.GetConfig().OIDCGroupHeader)
 	groups := []string{}
 	if strings.Contains(groupString, ",") {
 		groups = strings.Split(groupString, ",")
@@ -19,9 +19,9 @@ func GetUserFromOIDC(req *http.Request, api base.BaseAPI) models.RequestUser {
 
 	// Generate user data
 	userData := models.UserData{
-		Name:     req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCNameClaim),
-		Email:    req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCEmailClaim),
-		Username: req.Header.Get("Oidc-Claim-" + api.GetConfig().OIDCUsernameClaim),
+		Name:     req.Header.Get(api.GetConfig().OIDCNameHeader),
+		Email:    req.Header.Get(api.GetConfig().OIDCEmailHeader),
+		Username: req.Header.Get(api.GetConfig().OIDCUsernameHeader),
 		Groups:   groups,
 	}
 
