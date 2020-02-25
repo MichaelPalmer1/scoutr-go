@@ -29,9 +29,9 @@ func main() {
 	flag.StringVar(&api.Config.GroupTable, "group-table", "", "Group table")
 	flag.StringVar(&api.Config.AuditTable, "audit-table", "", "Audit table")
 	flag.IntVar(&api.Config.LogRetentionDays, "log-retention-days", 30, "Days to retain read logs")
-	flag.StringVar(&api.Config.OIDCUsernameHeader, "oidc-username-header", "Sub", "Username header from OIDC")
-	flag.StringVar(&api.Config.OIDCNameHeader, "oidc-name-header", "Name", "Name header from OIDC")
-	flag.StringVar(&api.Config.OIDCEmailHeader, "oidc-email-header", "Mail", "Email header from OIDC")
+	flag.StringVar(&api.Config.OIDCUsernameHeader, "oidc-username-header", "Oidc-Claim-Sub", "Username header from OIDC")
+	flag.StringVar(&api.Config.OIDCNameHeader, "oidc-name-header", "Oidc-Claim-Name", "Name header from OIDC")
+	flag.StringVar(&api.Config.OIDCEmailHeader, "oidc-email-header", "Oidc-Claim-Mail", "Email header from OIDC")
 	flag.StringVar(&api.Config.OIDCGroupHeader, "oidc-group-header", "", "Group header from OIDC")
 	flag.Parse()
 
