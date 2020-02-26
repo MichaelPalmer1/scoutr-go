@@ -67,6 +67,11 @@ func (api FirestoreAPI) Update(req models.Request, partitionKey map[string]strin
 		}
 	}
 
+	// Attempt to fetch the item
+	if _, err := api.fetchItem(user, partitionKey[api.Config.PrimaryKey]); err != nil {
+		return nil, err
+	}
+
 	// Build update expression
 	updates := []firestore.Update{}
 	for key, value := range item {

@@ -14,7 +14,10 @@ func (api FirestoreAPI) Delete(req models.Request, partitionKey map[string]strin
 		return err
 	}
 
-	// TODO: Build filters
+	// Attempt to fetch the item
+	if _, err := api.fetchItem(user, partitionKey[api.Config.PrimaryKey]); err != nil {
+		return err
+	}
 
 	// Delete the item
 	doc := api.Client.Collection(api.Config.DataTable).Doc(partitionKey[api.Config.PrimaryKey])

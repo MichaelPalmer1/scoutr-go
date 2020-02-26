@@ -17,6 +17,21 @@ func (api FirestoreAPI) Get(req models.Request, id string) (models.Record, error
 		return nil, err
 	}
 
+	// Fetch the item
+	record, err := api.fetchItem(user, id)
+	if err != nil {
+		// Pass through any errors
+		return nil, err
+	}
+
+	// Create audit log
+	api.auditLog("GET", req, *user, &map[string]string{api.Config.PrimaryKey: id}, nil)
+
+	return record, nil
+}
+
+// Attempt to fetch a single item, applying any user filters beforehand
+func (api *FirestoreAPI) fetchItem(user *models.User, id string) (models.Record, error) {
 	// Build filters
 	collection := api.Client.Collection(api.Config.DataTable)
 	f := FirestoreFiltering{
@@ -66,9 +81,6 @@ func (api FirestoreAPI) Get(req models.Request, id string) (models.Record, error
 		records = append(records, doc.Data())
 	}
 
-	// Filter the response
-	api.PostProcess(records, user)
-
 	// Make sure only a single record was returned
 	if len(records) > 1 {
 		return nil, &models.BadRequest{
@@ -79,9 +91,6 @@ func (api FirestoreAPI) Get(req models.Request, id string) (models.Record, error
 			Message: "Item does not exist or you do not have permission to view it",
 		}
 	}
-
-	// Create audit log
-	api.auditLog("GET", req, *user, &map[string]string{api.Config.PrimaryKey: id}, nil)
 
 	return records[0], nil
 }
