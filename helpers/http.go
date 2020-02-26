@@ -22,6 +22,8 @@ func HTTPErrorHandler(err error, w http.ResponseWriter) bool {
 		switch err.(type) {
 		case *models.Unauthorized:
 			http.Error(w, err.Error(), http.StatusUnauthorized)
+		case *models.Forbidden:
+			http.Error(w, err.Error(), http.StatusForbidden)
 		case *models.BadRequest:
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		case *models.NotFound:

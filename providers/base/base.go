@@ -111,8 +111,8 @@ func (api *SimpleAPI) ValidateRequest(req models.Request, user *models.User) err
 		// User is authorized to access this endpoint
 		return nil
 	}
-	// User is not authorized
-	return &models.Unauthorized{
+	// User is not permitted to perform this API call
+	return &models.Forbidden{
 		Message: fmt.Sprintf("Not authorized to perform %s on endpoint %s", req.Method, req.Path),
 	}
 }
