@@ -53,21 +53,21 @@ func (api *SimpleAPI) CanAccessEndpoint(method string, path string, user *models
 		// Fetch the user
 		user, err = api.GetUser(request.User.ID, request.User.Data)
 		if err != nil {
-			log.Errorln("Failed to fetch user", err)
+			log.Errorf("Failed to fetch user: %v", err)
 			return false
 		}
 
 		// Validate the user
 		err = api.ValidateUser(user)
 		if err != nil {
-			log.Println("Encountered error while validating user", err)
+			log.Errorf("Encountered error while validating user: %v", err)
 			return false
 		}
 	}
 
 	// Verify user was provided/looked up
 	if user == nil {
-		log.Println("Unable to validate if user has access to endpoint because user was nil")
+		log.Warnln("Unable to validate if user has access to endpoint because user was nil")
 		return false
 	}
 
