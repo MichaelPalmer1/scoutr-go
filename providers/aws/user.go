@@ -19,7 +19,7 @@ func (api DynamoAPI) InitializeRequest(req models.Request) (*models.User, error)
 	}
 
 	if err := api.ValidateUser(user); err != nil {
-		log.Warnln("[%s] Bad User - %s", api.UserIdentifier(user), err)
+		log.Warnf("[%s] Bad User - %s", api.UserIdentifier(user), err)
 		return nil, err
 	}
 
@@ -51,7 +51,10 @@ func (api DynamoAPI) GetUser(id string, userData *models.UserData) (*models.User
 		isUser = false
 	} else {
 		// Found a user, unmarshal into user object
-		dynamodbattribute.UnmarshalMap(result.Item, &user)
+		err := dynamodbattribute.UnmarshalMap(result.Item, &user)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Try to find groups in the auth table
@@ -73,41 +76,32 @@ func (api DynamoAPI) GetUser(id string, userData *models.UserData) (*models.User
 				continue
 			} else {
 				// Found group, unmarshal into group object
-				dynamodbattribute.UnmarshalMap(result.Item, &group)
+				err := dynamodbattribute.UnmarshalMap(result.Item, &group)
+				if err != nil {
+					return nil, err
+				}
 			}
 
 			// Store this as a real group
 			groupIDs = append(groupIDs, groupID)
 
 			// Add sub-groups
-			for _, item := range group.Groups {
-				user.Groups = append(user.Groups, item)
-			}
+			user.Groups = append(user.Groups, group.Groups...)
 
 			// Merge permitted endpoints
-			for _, item := range group.PermittedEndpoints {
-				user.PermittedEndpoints = append(user.PermittedEndpoints, item)
-			}
+			user.PermittedEndpoints = append(user.PermittedEndpoints, group.PermittedEndpoints...)
 
 			// Merge exclude fields
-			for _, item := range group.ExcludeFields {
-				user.ExcludeFields = append(user.ExcludeFields, item)
-			}
+			user.ExcludeFields = append(user.ExcludeFields, group.ExcludeFields...)
 
 			// Merge update fields restricted
-			for _, item := range group.UpdateFieldsRestricted {
-				user.UpdateFieldsRestricted = append(user.UpdateFieldsRestricted, item)
-			}
+			user.UpdateFieldsRestricted = append(user.UpdateFieldsRestricted, group.UpdateFieldsRestricted...)
 
 			// Merge update fields permitted
-			for _, item := range group.UpdateFieldsPermitted {
-				user.UpdateFieldsPermitted = append(user.UpdateFieldsPermitted, item)
-			}
+			user.UpdateFieldsPermitted = append(user.UpdateFieldsPermitted, group.UpdateFieldsPermitted...)
 
 			// Merge filter fields
-			for _, item := range group.FilterFields {
-				user.FilterFields = append(user.FilterFields, item)
-			}
+			user.FilterFields = append(user.FilterFields, group.FilterFields...)
 		}
 	}
 
@@ -137,7 +131,10 @@ func (api DynamoAPI) GetUser(id string, userData *models.UserData) (*models.User
 			}
 		} else {
 			// Found group, unmarshal into group object
-			dynamodbattribute.UnmarshalMap(result.Item, &group)
+			err := dynamodbattribute.UnmarshalMap(result.Item, &group)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		// Merge user and group permissions together
@@ -166,12 +163,8 @@ func (api DynamoAPI) GetUser(id string, userData *models.UserData) (*models.User
 	// Update user object with all applied OIDC groups
 	if len(groupIDs) > 0 {
 		var groups []string
-		for _, groupID := range userGroups {
-			groups = append(groups, groupID)
-		}
-		for _, groupID := range groupIDs {
-			groups = append(groups, groupID)
-		}
+		groups = append(groups, userGroups...)
+		groups = append(groups, groupIDs...)
 		user.Groups = groups
 	}
 
