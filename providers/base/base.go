@@ -10,6 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// BaseAPI : Low level interface that defines all the functions used by a SimpleAPI provider. Some of these would be
+// implemented by the SimpleAPI struct
 type BaseAPI interface {
 	GetConfig() config.Config
 	CanAccessEndpoint(string, string, *models.User, *models.Request) bool
@@ -25,6 +27,8 @@ type BaseAPI interface {
 	Search(models.Request, string, []string) ([]models.Record, error)
 }
 
+// SimpleAPI : Base struct that implements BaseAPI and sets up some commonly used functions across
+// various cloud providers
 type SimpleAPI struct {
 	BaseAPI
 	Filtering Filtering
@@ -90,7 +94,14 @@ func (api *SimpleAPI) ValidateUser(user *models.User) error {
 
 	// TODO: Validate filter fields
 
-	// TODO: Validate permitted endpoints
+	// Make sure all the endpoints are valid regex
+	for _, item := range user.PermittedEndpoints {
+		if _, err := regexp.Compile(item.Endpoint); err != nil {
+			return &models.BadRequest{
+				Message: fmt.Sprintf("Failed to compile endpoint regex: %v", err.Error()),
+			}
+		}
+	}
 
 	return nil
 }
