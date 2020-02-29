@@ -1,5 +1,6 @@
 simple-api-go
 .vs-code/
+.idea/
 __debug_bin
 vendor/
 bin/

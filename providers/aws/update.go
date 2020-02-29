@@ -130,7 +130,10 @@ func (api DynamoAPI) Update(req models.Request, partitionKey map[string]string, 
 	}
 
 	// Unmarshal into output interface
-	dynamodbattribute.UnmarshalMap(updatedItem.Attributes, &output)
+	err = dynamodbattribute.UnmarshalMap(updatedItem.Attributes, &output)
+	if err != nil {
+		return nil, err
+	}
 
 	// Create audit log
 	api.auditLog("UPDATE", req, *user, &partitionKey, &item)

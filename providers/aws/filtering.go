@@ -3,6 +3,8 @@ package aws
 import (
 	"encoding/json"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/MichaelPalmer1/simple-api-go/providers/base"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
@@ -93,7 +95,11 @@ func (f *DynamoFiltering) LessThanEqual(key string, value interface{}) interface
 // Between : Check for records that are between a low and high value
 func (f *DynamoFiltering) Between(key string, value interface{}) interface{} {
 	var valueList []string
-	json.Unmarshal([]byte(value.(string)), &valueList)
+	err := json.Unmarshal([]byte(value.(string)), &valueList)
+	if err != nil {
+		log.Errorf("Failed to unmarshal data: %v", err)
+		return nil
+	}
 	return expression.Name(key).Between(expression.Value(valueList[0]), expression.Value(valueList[1]))
 }
 
@@ -101,6 +107,10 @@ func (f *DynamoFiltering) Between(key string, value interface{}) interface{} {
 func (f *DynamoFiltering) In(key string, values interface{}) interface{} {
 	// TODO: Some reason, this operator does not seem to work right in Go...
 	var valueList []string
-	json.Unmarshal([]byte(values.(string)), &valueList)
+	err := json.Unmarshal([]byte(values.(string)), &valueList)
+	if err != nil {
+		log.Errorf("Failed to unmarshal data: %v", err)
+		return nil
+	}
 	return expression.Name(key).In(expression.Value(valueList))
 }

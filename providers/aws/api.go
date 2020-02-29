@@ -24,11 +24,16 @@ func (api *DynamoAPI) Init(config *aws.Config) {
 
 func scan(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.Record, error) {
 	results := []models.Record{}
+	var lastErr error
 	err := client.ScanPages(input,
 		func(page *dynamodb.ScanOutput, lastPage bool) bool {
 			// Unmarshal data into Record model
 			records := []models.Record{}
-			dynamodbattribute.UnmarshalListOfMaps(page.Items, &records)
+			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &records)
+			if err != nil {
+				lastErr = err
+				return false
+			}
 
 			// Append records to results
 			results = append(results, records...)
@@ -39,17 +44,25 @@ func scan(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.Record
 	if err != nil {
 		return nil, err
 	}
+	if lastErr != nil {
+		return nil, lastErr
+	}
 
 	return results, nil
 }
 
 func scanAudit(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.AuditLog, error) {
 	results := []models.AuditLog{}
+	var lastErr error
 	err := client.ScanPages(input,
 		func(page *dynamodb.ScanOutput, lastPage bool) bool {
 			// Unmarshal data into AuditLog model
 			records := []models.AuditLog{}
-			dynamodbattribute.UnmarshalListOfMaps(page.Items, &records)
+			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &records)
+			if err != nil {
+				lastErr = err
+				return false
+			}
 
 			// Append records to results
 			results = append(results, records...)
@@ -59,6 +72,9 @@ func scanAudit(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.A
 	)
 	if err != nil {
 		return nil, err
+	}
+	if lastErr != nil {
+		return nil, lastErr
 	}
 
 	return results, nil
