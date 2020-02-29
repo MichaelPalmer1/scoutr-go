@@ -3,6 +3,7 @@ package gcp
 import (
 	"cloud.google.com/go/firestore"
 	"github.com/MichaelPalmer1/simple-api-go/models"
+	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -16,6 +17,21 @@ func (api FirestoreAPI) Get(req models.Request, id string) (models.Record, error
 		return nil, err
 	}
 
+	// Fetch the item
+	record, err := api.fetchItem(user, id)
+	if err != nil {
+		// Pass through any errors
+		return nil, err
+	}
+
+	// Create audit log
+	api.auditLog("GET", req, *user, &map[string]string{api.Config.PrimaryKey: id}, nil)
+
+	return record, nil
+}
+
+// Attempt to fetch a single item, applying any user filters beforehand
+func (api *FirestoreAPI) fetchItem(user *models.User, id string) (models.Record, error) {
 	// Build filters
 	collection := api.Client.Collection(api.Config.DataTable)
 	f := FirestoreFiltering{
@@ -33,35 +49,37 @@ func (api FirestoreAPI) Get(req models.Request, id string) (models.Record, error
 	// Build key condition
 	query = query.Where(api.Config.PrimaryKey, "==", id)
 
-	// Download the data
-	docs, err := query.Documents(api.context).GetAll()
-	if err != nil {
-		// Attempt to convert error to a status code
-		code, ok := status.FromError(err)
+	// Query the data
+	iter := query.Documents(api.context)
+	records := []models.Record{}
 
-		// Check if the status conversion was successful
-		if ok {
-			switch code.Code() {
-			case codes.InvalidArgument:
-				// Return bad request on invalid argument errors
-				return nil, &models.BadRequest{
-					Message: code.Message(),
+	// Iterate through the results
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			// Attempt to convert error to a status code
+			code, ok := status.FromError(err)
+
+			// Check if the status conversion was successful
+			if ok {
+				switch code.Code() {
+				case codes.InvalidArgument:
+					// Return bad request on invalid argument errors
+					return nil, &models.BadRequest{
+						Message: code.Message(),
+					}
 				}
 			}
+
+			// Fallback to just returning the raw error
+			return nil, err
 		}
 
-		// Fallback to just returning the raw error
-		return nil, err
-	}
-
-	// TODO: fix this, this feels hacky...and not optimal
-	records := []models.Record{}
-	for _, doc := range docs {
+		// Add item to records
 		records = append(records, doc.Data())
 	}
-
-	// Filter the response
-	api.PostProcess(records, user)
 
 	// Make sure only a single record was returned
 	if len(records) > 1 {
@@ -73,9 +91,6 @@ func (api FirestoreAPI) Get(req models.Request, id string) (models.Record, error
 			Message: "Item does not exist or you do not have permission to view it",
 		}
 	}
-
-	// Create audit log
-	api.auditLog("GET", req, *user, &map[string]string{api.Config.PrimaryKey: id}, nil)
 
 	return records[0], nil
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func get(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+func delete(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	requestUser := helpers.GetUserFromOIDC(req, api)
 
 	// Build the request model
@@ -21,8 +21,13 @@ func get(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		UserAgent: req.UserAgent(),
 	}
 
-	// Fetch the item
-	data, err := api.Get(request, params.ByName("id"))
+	// Build partition key
+	partitionKey := map[string]string{
+		api.Config.PrimaryKey: params.ByName("id"),
+	}
+
+	// Delete the item
+	err := api.Delete(request, partitionKey)
 
 	// Check for errors in the response
 	if helpers.HTTPErrorHandler(err, w) {
@@ -30,7 +35,7 @@ func get(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	}
 
 	// Marshal the response and write it to output
-	out, _ := json.Marshal(data)
+	out, _ := json.Marshal(true)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)
 }

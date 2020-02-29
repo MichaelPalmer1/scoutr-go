@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
-	"github.com/MichaelPalmer1/simple-api-go/providers"
+	"github.com/MichaelPalmer1/simple-api-go/helpers"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -28,18 +28,18 @@ func listUnique(event events.APIGatewayProxyRequest) (events.APIGatewayProxyResp
 	}
 
 	// Initialize api gateway
-	api, request := providers.InitAPIGateway(event, config)
+	api, request := helpers.InitAPIGateway(event, config)
 
 	// List the data
 	data, err := api.ListUniqueValues(request, os.Getenv("UniqueKey"))
 
 	// Handle any errors
-	if errorResponse := providers.APIGatewayErrorHandler(err); errorResponse != nil {
+	if errorResponse := helpers.APIGatewayErrorHandler(err); errorResponse != nil {
 		return *errorResponse, nil
 	}
 
 	// Send response
-	return providers.ProcessAPIGatewayResponse(data)
+	return helpers.ProcessAPIGatewayResponse(data)
 }
 
 func local() {

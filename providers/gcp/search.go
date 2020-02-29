@@ -4,6 +4,7 @@ import (
 	"cloud.google.com/go/firestore"
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -27,32 +28,39 @@ func (api FirestoreAPI) Search(req models.Request, key string, values []string) 
 		return nil, err
 	}
 
-	// Download the data
+	// Cast to Firestore query
 	query := filters.(firestore.Query)
-	data, err := query.Documents(api.context).GetAll()
-	if err != nil {
-		// Attempt to convert error to a status code
-		code, ok := status.FromError(err)
 
-		// Check if the status conversion was successful
-		if ok {
-			switch code.Code() {
-			case codes.InvalidArgument:
-				// Return bad request on invalid argument errors
-				return nil, &models.BadRequest{
-					Message: code.Message(),
+	// Query the data
+	iter := query.Documents(api.context)
+	records := []models.Record{}
+
+	// Iterate through the results
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			// Attempt to convert error to a status code
+			code, ok := status.FromError(err)
+
+			// Check if the status conversion was successful
+			if ok {
+				switch code.Code() {
+				case codes.InvalidArgument:
+					// Return bad request on invalid argument errors
+					return nil, &models.BadRequest{
+						Message: code.Message(),
+					}
 				}
 			}
+
+			// Fallback to just returning the raw error
+			return nil, err
 		}
 
-		// Fallback to just returning the raw error
-		return nil, err
-	}
-
-	// TODO: fix this, this feels hacky...and not optimal
-	records := []models.Record{}
-	for _, item := range data {
-		records = append(records, item.Data())
+		// Add item to records
+		records = append(records, doc.Data())
 	}
 
 	// Filter the response

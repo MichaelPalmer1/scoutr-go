@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/MichaelPalmer1/simple-api-go/config"
-	"github.com/MichaelPalmer1/simple-api-go/providers"
+	"github.com/MichaelPalmer1/simple-api-go/helpers"
 	"github.com/MichaelPalmer1/simple-api-go/providers/base"
 	"github.com/MichaelPalmer1/simple-api-go/providers/gcp"
 	log "github.com/sirupsen/logrus"
@@ -29,10 +29,10 @@ func main() {
 	flag.StringVar(&api.Config.GroupTable, "group-table", "", "Group table")
 	flag.StringVar(&api.Config.AuditTable, "audit-table", "", "Audit table")
 	flag.IntVar(&api.Config.LogRetentionDays, "log-retention-days", 30, "Days to retain read logs")
-	flag.StringVar(&api.Config.OIDCUsernameClaim, "oidc-username-claim", "Sub", "Username claim from OIDC")
-	flag.StringVar(&api.Config.OIDCNameClaim, "oidc-name-claim", "Name", "Name claim from OIDC")
-	flag.StringVar(&api.Config.OIDCEmailClaim, "oidc-email-claim", "Mail", "Email claim from OIDC")
-	flag.StringVar(&api.Config.OIDCGroupClaim, "oidc-group-claim", "", "Group claim from OIDC")
+	flag.StringVar(&api.Config.OIDCUsernameHeader, "oidc-username-header", "Oidc-Claim-Sub", "Username header from OIDC")
+	flag.StringVar(&api.Config.OIDCNameHeader, "oidc-name-header", "Oidc-Claim-Name", "Name header from OIDC")
+	flag.StringVar(&api.Config.OIDCEmailHeader, "oidc-email-header", "Oidc-Claim-Mail", "Email header from OIDC")
+	flag.StringVar(&api.Config.OIDCGroupHeader, "oidc-group-header", "", "Group header from OIDC")
 	flag.Parse()
 
 	// Make sure required fields are provided
@@ -51,7 +51,7 @@ func main() {
 	defer api.Close()
 
 	// Initialize http server
-	router, err := providers.InitHTTPServer(api, "id", "/items/", []string{"CREATE", "UPDATE"})
+	router, err := helpers.InitHTTPServer(api, "id", "/items/", []string{"CREATE", "UPDATE"})
 	if err != nil {
 		panic(err)
 	}
@@ -60,6 +60,7 @@ func main() {
 	router.POST("/item/", create)
 	router.GET("/item/:id", get)
 	router.PUT("/item/:id", update)
+	router.DELETE("/item/:id", delete)
 	router.GET("/types/", listTypes)
 
 	// Start the server

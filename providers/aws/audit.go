@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"sort"
 	"time"
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
@@ -71,6 +72,11 @@ func (api DynamoAPI) ListAuditLogs(req models.Request, pathParams map[string]str
 		log.Errorln("Error while attempting to list records", err)
 		return nil, err
 	}
+
+	// Sort the results
+	sort.Slice(data, func(i, j int) bool {
+		return data[i].Time > data[j].Time
+	})
 
 	return data, nil
 }

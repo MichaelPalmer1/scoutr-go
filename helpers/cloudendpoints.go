@@ -1,4 +1,4 @@
-package providers
+package helpers
 
 import (
 	"net/http"

@@ -4,10 +4,17 @@ type baseError struct {
 	Message string
 }
 
-// Unauthorized : User does not have permission
+// Unauthorized : User is not authenticated
 type Unauthorized baseError
 
 func (e *Unauthorized) Error() string {
+	return e.Message
+}
+
+// Forbidden : User does not have permission
+type Forbidden baseError
+
+func (e *Forbidden) Error() string {
 	return e.Message
 }
 

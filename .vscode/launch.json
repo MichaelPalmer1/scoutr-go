@@ -5,24 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run server",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}",
-            "env": {},
-            "args": [
-                "-data-table",
-                "data",
-                "-auth-table",
-                "auth",
-                "-group-table",
-                "groups",
-                "-audit-table",
-                "audit"
-            ]
-        },
-        {
             "name": "AWS http server",
             "type": "go",
             "request": "launch",

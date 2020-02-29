@@ -25,6 +25,7 @@ type BaseAPI interface {
 	ListAuditLogs(models.Request, map[string]string, map[string]string) ([]models.AuditLog, error)
 	History(models.Request, string, string, map[string]string, []string) ([]models.History, error)
 	Search(models.Request, string, []string) ([]models.Record, error)
+	Delete(models.Request, map[string]string) error
 }
 
 // SimpleAPI : Base struct that implements BaseAPI and sets up some commonly used functions across
@@ -121,8 +122,8 @@ func (api *SimpleAPI) ValidateRequest(req models.Request, user *models.User) err
 		// User is authorized to access this endpoint
 		return nil
 	}
-	// User is not authorized
-	return &models.Unauthorized{
+	// User is not permitted to perform this API call
+	return &models.Forbidden{
 		Message: fmt.Sprintf("Not authorized to perform %s on endpoint %s", req.Method, req.Path),
 	}
 }

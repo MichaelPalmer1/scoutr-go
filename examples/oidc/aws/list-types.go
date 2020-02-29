@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
-	"github.com/MichaelPalmer1/simple-api-go/providers"
+	"github.com/MichaelPalmer1/simple-api-go/helpers"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -13,7 +13,7 @@ func listTypes(w http.ResponseWriter, req *http.Request, params httprouter.Param
 	pathParams := make(map[string]string)
 	queryParams := make(map[string]string)
 
-	requestUser := providers.GetUserFromOIDC(req, api)
+	requestUser := helpers.GetUserFromOIDC(req, api)
 
 	// Parse query params
 	for key, values := range req.URL.Query() {
@@ -40,7 +40,7 @@ func listTypes(w http.ResponseWriter, req *http.Request, params httprouter.Param
 	data, err := api.ListUniqueValues(request, "type")
 
 	// Check for errors in the response
-	if providers.HTTPErrorHandler(err, w) {
+	if helpers.HTTPErrorHandler(err, w) {
 		return
 	}
 
