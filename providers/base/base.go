@@ -130,27 +130,17 @@ func (api *SimpleAPI) PostProcess(data []models.Record, user *models.User) {
 // MergePermissions : Merge permissions expressed in a group into the user object
 func (api *SimpleAPI) MergePermissions(user *models.User, group *models.Group) {
 	// Merge permitted endpoints
-	for _, item := range group.PermittedEndpoints {
-		user.PermittedEndpoints = append(user.PermittedEndpoints, item)
-	}
+	user.PermittedEndpoints = append(user.PermittedEndpoints, group.PermittedEndpoints...)
 
 	// Merge exclude fields
-	for _, item := range group.ExcludeFields {
-		user.ExcludeFields = append(user.ExcludeFields, item)
-	}
+	user.ExcludeFields = append(user.ExcludeFields, group.ExcludeFields...)
 
 	// Merge update fields restricted
-	for _, item := range group.UpdateFieldsRestricted {
-		user.UpdateFieldsRestricted = append(user.UpdateFieldsRestricted, item)
-	}
+	user.UpdateFieldsRestricted = append(user.UpdateFieldsRestricted, group.UpdateFieldsRestricted...)
 
 	// Merge update fields permitted
-	for _, item := range group.UpdateFieldsPermitted {
-		user.UpdateFieldsPermitted = append(user.UpdateFieldsPermitted, item)
-	}
+	user.UpdateFieldsPermitted = append(user.UpdateFieldsPermitted, group.UpdateFieldsPermitted...)
 
 	// Merge filter fields
-	for _, item := range group.FilterFields {
-		user.FilterFields = append(user.FilterFields, item)
-	}
+	user.FilterFields = append(user.FilterFields, group.FilterFields...)
 }
