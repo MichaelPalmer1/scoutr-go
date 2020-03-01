@@ -17,7 +17,7 @@ func (api FirestoreAPI) InitializeRequest(req models.Request) (*models.User, err
 	}
 
 	if err := api.ValidateUser(user); err != nil {
-		log.Warnln("[%s] Bad User - %s", api.UserIdentifier(user), err)
+		log.Warnf("[%s] Bad User - %s", api.UserIdentifier(user), err)
 		return nil, err
 	}
 
@@ -50,7 +50,11 @@ func (api FirestoreAPI) GetUser(id string, userData *models.UserData) (*models.U
 			log.Errorf("Failed to marshal to json: %v", err)
 			return nil, err
 		}
-		json.Unmarshal(data, &user)
+		err = json.Unmarshal(data, &user)
+		if err != nil {
+			log.Errorf("Failed to unmarshal json: %v", err)
+			return nil, err
+		}
 	}
 
 	// Try to find supplied entitlements in the auth table
@@ -72,41 +76,33 @@ func (api FirestoreAPI) GetUser(id string, userData *models.UserData) (*models.U
 					log.Errorf("Failed to marshal to json: %v", err)
 					return nil, err
 				}
-				json.Unmarshal(data, &entitlement)
+				err = json.Unmarshal(data, &entitlement)
+				if err != nil {
+					log.Errorf("Failed to unmarshal json: %v", err)
+					return nil, err
+				}
 			}
 
-			// Store this as a real entitement
+			// Store this as a real entitlement
 			entitlementIDs = append(entitlementIDs, id)
 
 			// Add sub-groups
-			for _, item := range entitlement.Groups {
-				user.Groups = append(user.Groups, item)
-			}
+			user.Groups = append(user.Groups, entitlement.Groups...)
 
 			// Merge permitted endpoints
-			for _, item := range entitlement.PermittedEndpoints {
-				user.PermittedEndpoints = append(user.PermittedEndpoints, item)
-			}
+			user.PermittedEndpoints = append(user.PermittedEndpoints, entitlement.PermittedEndpoints...)
 
 			// Merge exclude fields
-			for _, item := range entitlement.ExcludeFields {
-				user.ExcludeFields = append(user.ExcludeFields, item)
-			}
+			user.ExcludeFields = append(user.ExcludeFields, entitlement.ExcludeFields...)
 
 			// Merge update fields restricted
-			for _, item := range entitlement.UpdateFieldsRestricted {
-				user.UpdateFieldsRestricted = append(user.UpdateFieldsRestricted, item)
-			}
+			user.UpdateFieldsRestricted = append(user.UpdateFieldsRestricted, entitlement.UpdateFieldsRestricted...)
 
 			// Merge update fields permitted
-			for _, item := range entitlement.UpdateFieldsPermitted {
-				user.UpdateFieldsPermitted = append(user.UpdateFieldsPermitted, item)
-			}
+			user.UpdateFieldsPermitted = append(user.UpdateFieldsPermitted, entitlement.UpdateFieldsPermitted...)
 
 			// Merge filter fields
-			for _, item := range entitlement.FilterFields {
-				user.FilterFields = append(user.FilterFields, item)
-			}
+			user.FilterFields = append(user.FilterFields, entitlement.FilterFields...)
 		}
 	}
 
@@ -136,7 +132,11 @@ func (api FirestoreAPI) GetUser(id string, userData *models.UserData) (*models.U
 				log.Errorf("Failed to marshal to json: %v", err)
 				return nil, err
 			}
-			json.Unmarshal(data, &group)
+			err = json.Unmarshal(data, &group)
+			if err != nil {
+				log.Errorf("Failed to unmarshal json: %v", err)
+				return nil, err
+			}
 		}
 
 		// Merge permissions
@@ -165,12 +165,8 @@ func (api FirestoreAPI) GetUser(id string, userData *models.UserData) (*models.U
 	// Update user object with all applied entitlements
 	if len(entitlementIDs) > 0 {
 		var groups []string
-		for _, groupID := range userGroups {
-			groups = append(groups, groupID)
-		}
-		for _, entitlement := range entitlementIDs {
-			groups = append(groups, entitlement)
-		}
+		groups = append(groups, userGroups...)
+		groups = append(groups, entitlementIDs...)
 		user.Groups = groups
 	}
 
