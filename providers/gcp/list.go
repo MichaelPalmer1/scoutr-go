@@ -17,19 +17,25 @@ func (api FirestoreAPI) List(req models.Request) ([]models.Record, error) {
 		return nil, err
 	}
 
+	// Copy queryParams into params
+	params := make(map[string]string)
+	for key, value := range req.QueryParams {
+		params[key] = value
+	}
+
+	// Merge pathParams into params
+	for key, value := range req.PathParams {
+		params[key] = value
+	}
+
 	// Generate dynamic search
 	searchKey, hasSearchKey := req.PathParams["search_key"]
 	searchValue, hasSearchValue := req.PathParams["search_value"]
 	if hasSearchKey && hasSearchValue {
 		// Map the search key and value into path params
-		req.PathParams[searchKey] = searchValue
-		delete(req.PathParams, "search_key")
-		delete(req.PathParams, "search_value")
-	}
-
-	// Merge pathParams into queryParams
-	for key, value := range req.PathParams {
-		req.QueryParams[key] = value
+		params[searchKey] = searchValue
+		delete(params, "search_key")
+		delete(params, "search_value")
 	}
 
 	// Build filters
@@ -37,7 +43,7 @@ func (api FirestoreAPI) List(req models.Request) ([]models.Record, error) {
 	f := FirestoreFiltering{
 		Query: collection.Query,
 	}
-	filters, _, err := api.Filter(&f, user, req.QueryParams)
+	filters, _, err := api.Filter(&f, user, params)
 	if err != nil {
 		return nil, err
 	}
