@@ -21,8 +21,8 @@ type Filtering interface {
 	Equals(string, interface{}) interface{}
 
 	// Optional
-	StartsWith(string, interface{}) interface{}
 	NotEquals(string, interface{}) interface{}
+	StartsWith(string, interface{}) interface{}
 	Contains(string, interface{}) interface{}
 	NotContains(string, interface{}) interface{}
 	Exists(string, interface{}) interface{}

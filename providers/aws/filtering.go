@@ -35,11 +35,6 @@ func (f *DynamoFiltering) And(conditions, condition interface{}) interface{} {
 	return expression.And(conditions.(expression.ConditionBuilder), condition.(expression.ConditionBuilder))
 }
 
-// StartsWith : Find all records that contain items that start with a specific value
-func (f *DynamoFiltering) StartsWith(key string, value interface{}) interface{} {
-	return expression.Name(key).BeginsWith(value.(string))
-}
-
 // Equals : Standard equals operation
 func (f *DynamoFiltering) Equals(key string, value interface{}) interface{} {
 	return expression.Name(key).Equal(expression.Value(value))
@@ -48,6 +43,11 @@ func (f *DynamoFiltering) Equals(key string, value interface{}) interface{} {
 // NotEquals : Standard not equals operation
 func (f *DynamoFiltering) NotEquals(key string, value interface{}) interface{} {
 	return expression.Name(key).NotEqual(expression.Value(value))
+}
+
+// StartsWith : Find all records that contain items that start with a specific value
+func (f *DynamoFiltering) StartsWith(key string, value interface{}) interface{} {
+	return expression.Name(key).BeginsWith(value.(string))
 }
 
 // Contains : Check if a value contains a string
