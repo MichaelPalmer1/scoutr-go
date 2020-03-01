@@ -32,13 +32,14 @@ type Filtering interface {
 	LessThanEquals(string, interface{}) interface{}
 	Between(string, interface{}) interface{}
 	In(string, interface{}) interface{}
+	NotIn(string, interface{}) interface{}
 }
 
 // Filter : Build a filter
 func (api *SimpleAPI) Filter(f Filtering, user *models.User, filters map[string]string) (interface{}, bool, error) {
 	var conditions interface{}
 	initialized := false
-	re := regexp.MustCompile(`^(.+)__(in|contains|notcontains|startswith|ne|gt|lt|ge|le|between|exists)$`)
+	re := regexp.MustCompile(`^(.+)__(in|notin|contains|notcontains|startswith|ne|gt|lt|ge|le|between|exists)$`)
 
 	// Build user filters
 	if user != nil {

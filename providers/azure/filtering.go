@@ -2,6 +2,7 @@ package azure
 
 import (
 	"encoding/json"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 
@@ -16,13 +17,19 @@ type MongoDBFiltering struct {
 // Operations : Map of supported operations for this filter provider
 func (f *MongoDBFiltering) Operations() base.OperationMap {
 	return base.OperationMap{
-		"ne":      f.NotEquals,
+		"ne":         f.NotEquals,
+		"startswith": f.StartsWith,
+		"contains":   f.Contains,
+		// TODO: NotContains does not work right
+		//"notcontains": f.NotContains,
+		"exists":  f.Exists,
 		"gt":      f.GreaterThan,
 		"lt":      f.LessThan,
 		"gte":     f.GreaterThanEqual,
 		"lte":     f.LessThanEqual,
 		"between": f.Between,
-		//"in": f.In,
+		"in":      f.In,
+		"notin":   f.NotIn,
 	}
 }
 
@@ -31,14 +38,18 @@ func (f *MongoDBFiltering) And(conditions, condition interface{}) interface{} {
 	var output bson.D
 
 	if _, ok := conditions.(bson.DocElem); ok {
+		// If element, add the element
 		output = append(output, conditions.(bson.DocElem))
 	} else {
+		// If element array, add all items of the array
 		output = append(output, conditions.(bson.D)...)
 	}
 
 	if _, ok := condition.(bson.DocElem); ok {
+		// If element, add the element
 		output = append(output, condition.(bson.DocElem))
 	} else {
+		// If element array, add all items of the array
 		output = append(output, condition.(bson.D)...)
 	}
 
@@ -57,6 +68,63 @@ func (f *MongoDBFiltering) NotEquals(key string, value interface{}) interface{} 
 		Value: bson.D{{
 			Name:  "$ne",
 			Value: value,
+		}},
+	}
+}
+
+// StartsWith : Check if string starts with a value
+func (f *MongoDBFiltering) StartsWith(key string, value interface{}) interface{} {
+	return bson.DocElem{
+		Name: key,
+		Value: bson.D{{
+			Name:  "$regex",
+			Value: fmt.Sprintf("^%s.*", value),
+		}},
+	}
+}
+
+// Contains : Check if string is contained in record
+func (f *MongoDBFiltering) Contains(key string, value interface{}) interface{} {
+	return bson.DocElem{
+		Name: key,
+		Value: bson.D{{
+			Name:  "$regex",
+			Value: value,
+		}},
+	}
+}
+
+// TODO: Feel like this *should* work, but it never returns results
+// NotContains : Check if string is not contained in record
+func (f *MongoDBFiltering) NotContains(key string, value interface{}) interface{} {
+	return bson.DocElem{
+		Name: key,
+		Value: bson.DocElem{
+			Name: "$not",
+			Value: bson.D{{
+				Name:  "$regex",
+				Value: value,
+			}},
+		},
+	}
+}
+
+// Exists : Check if attribute exists
+func (f *MongoDBFiltering) Exists(key string, value interface{}) interface{} {
+	var exists bool
+	if value == "true" {
+		exists = true
+	} else if value == "false" {
+		exists = false
+	} else {
+		log.Warnf("Invalid value for EXISTS operation: %s", value)
+		return nil
+	}
+	return bson.DocElem{
+		Name: key,
+		Value: bson.D{{
+			Name:  "$exists",
+			Value: exists,
 		}},
 	}
 }
@@ -119,16 +187,34 @@ func (f *MongoDBFiltering) Between(key string, value interface{}) interface{} {
 	)
 }
 
-// TODO: Find a way to use bson.A in github.com/globalsign/mgo/bson
-// It is supported in the mongodb BSON, but not the globalsign one. If I use the mongodb
-// one, the query breaks.
-
 // In : Find all records with a list of values
-//func (f *MongoDBFiltering) In(key string, values interface{}) interface{} {
-//	return bson.E{
-//		Key: key,
-//		Value: bson.D{
-//			{Key: "$in", Value: bson.A{values}},
-//		},
-//	}
-//}
+func (f *MongoDBFiltering) In(key string, values interface{}) interface{} {
+	var valueList []string
+	err := json.Unmarshal([]byte(values.(string)), &valueList)
+	if err != nil {
+		log.Errorf("Failed to unmarshal value list for IN operation: %v", err)
+		return nil
+	}
+	return bson.DocElem{
+		Name: key,
+		Value: bson.D{
+			{Name: "$in", Value: valueList},
+		},
+	}
+}
+
+// NotIn : Find all records not in a list of values
+func (f *MongoDBFiltering) NotIn(key string, values interface{}) interface{} {
+	var valueList []string
+	err := json.Unmarshal([]byte(values.(string)), &valueList)
+	if err != nil {
+		log.Errorf("Failed to unmarshal value list for NOT IN operation: %v", err)
+		return nil
+	}
+	return bson.DocElem{
+		Name: key,
+		Value: bson.D{
+			{Name: "$nin", Value: valueList},
+		},
+	}
+}
