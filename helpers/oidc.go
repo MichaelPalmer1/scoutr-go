@@ -13,7 +13,7 @@ func GetUserFromOIDC(req *http.Request, api base.BaseAPI) models.RequestUser {
 	// Parse groups
 	groupString := req.Header.Get(api.GetConfig().OIDCGroupHeader)
 	groups := []string{}
-	if strings.Contains(groupString, ",") {
+	if groupString != "" {
 		groups = strings.Split(groupString, ",")
 	}
 
