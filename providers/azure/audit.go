@@ -123,7 +123,7 @@ func (api MongoDBAPI) auditLog(action string, request models.Request, user model
 	err := collection.Insert(auditLog)
 	if err != nil {
 		log.Errorln("Failed to save audit log", err)
-		log.Infof("Failed audit log: '%s'", auditLog)
+		log.Infof("Failed audit log: '%v'", auditLog)
 		return err
 	}
 
