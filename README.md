@@ -1,6 +1,6 @@
 # Simple API Go
 
-A simple way to put an API in front of a DynamoDB or Firestore backend (CosmosDB support coming soon).
+A simple way to put an API in front of a DynamoDB, Firestore, or Azure CosmosDB (MongoDB) backend.
 
 This is based off of the Python implementation of the [SimpleAPI](https://github.com/GESkunkworks/simple-api).
 
@@ -283,7 +283,7 @@ and that meet any specified filter criteria.
 
 ### List by Unique Key
 
-The list by unique key endpoint is provided as a means to display all unique values for a single search key. It is
+The list by unique key endpoint provides a means to display all unique values for a single search key. It is
 implemented by specifying a value for the `uniqueKey` argument of the `ListUniqueValues()` function. This is only
 supported in `DynamoAPI` currently.
 
@@ -518,6 +518,7 @@ type = ABC AND status = Active
 
 For more complex queries, querystring search supports the below magic operations:
 - `in` (value is in list)
+- `notin` (value is not in list)
 - `ne` (not equal)
 - `startswith` (string starts with)
 - `contains` (string contains)
@@ -534,6 +535,19 @@ Note that DynamoDBAPI does not support the `in` operation and FirestoreAPI only 
 - gt
 - lt
 - ge
+- le
+- between
+
+The MongoDBAPI supports these operations:
+- in
+- notin
+- ne
+- startswith
+- contains
+- exists
+- gt
+- ge
+- lt
 - le
 - between
 
