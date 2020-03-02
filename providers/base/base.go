@@ -14,9 +14,9 @@ import (
 // implemented by the SimpleAPI struct
 type BaseAPI interface {
 	GetConfig() config.Config
+	GetAuth(string) (*models.User, error)
+	GetGroup(string) (*models.Group, error)
 	CanAccessEndpoint(BaseAPI, string, string, *models.User, *models.Request) bool
-	InitializeRequest(BaseAPI, models.Request) (*models.User, error)
-	GetUser(BaseAPI, string, *models.UserData) (*models.User, error)
 	Create(models.Request, map[string]string, map[string]utils.FieldValidation) error
 	Update(models.Request, map[string]string, map[string]string, map[string]utils.FieldValidation, string) (interface{}, error)
 	Get(models.Request, string) (models.Record, error)
@@ -26,8 +26,6 @@ type BaseAPI interface {
 	History(models.Request, string, string, map[string]string, []string) ([]models.History, error)
 	Search(models.Request, string, []string) ([]models.Record, error)
 	Delete(models.Request, map[string]string) error
-	GetAuth(string) (*models.User, error)
-	GetGroup(string) (*models.Group, error)
 }
 
 // SimpleAPI : Base struct that implements BaseAPI and sets up some commonly used functions across
@@ -53,7 +51,7 @@ func (api *SimpleAPI) CanAccessEndpoint(baseApi BaseAPI, method string, path str
 	var err error
 	if request != nil {
 		// Fetch the user
-		user, err = baseApi.GetUser(baseApi, request.User.ID, request.User.Data)
+		user, err = api.GetUser(baseApi, request.User.ID, request.User.Data)
 		if err != nil {
 			log.Errorf("Failed to fetch user: %v", err)
 			return false
@@ -190,7 +188,7 @@ func (api *SimpleAPI) BuildParams(req models.Request) map[string]string {
 // InitializeRequest : Given a request, get the corresponding user and perform
 // user and request validation.
 func (api SimpleAPI) InitializeRequest(baseApi BaseAPI, req models.Request) (*models.User, error) {
-	user, err := baseApi.GetUser(baseApi, req.User.ID, req.User.Data)
+	user, err := api.GetUser(baseApi, req.User.ID, req.User.Data)
 	if err != nil {
 		return nil, err
 	}
