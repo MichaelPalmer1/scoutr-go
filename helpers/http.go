@@ -9,6 +9,7 @@ import (
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	"github.com/MichaelPalmer1/simple-api-go/providers/base"
 	"github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
 )
 
 type userAccess struct {
@@ -89,7 +90,10 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 		// Marshal the response and write it to output
 		out, _ := json.Marshal(data)
 		w.Header().Add("Content-Type", "application/json")
-		w.Write(out)
+		_, err = w.Write(out)
+		if err != nil {
+			log.Errorf("Error writing output: %v", err)
+		}
 	}
 
 	search := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
@@ -125,7 +129,10 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 		// Marshal the response and write it to output
 		out, _ := json.Marshal(data)
 		w.Header().Add("Content-Type", "application/json")
-		w.Write(out)
+		_, err = w.Write(out)
+		if err != nil {
+			log.Errorf("Error writing output: %v", err)
+		}
 	}
 
 	userInfo := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
@@ -147,7 +154,10 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 		w.Header().Set("Content-Type", "application/json")
 
 		// Write output
-		w.Write(data)
+		_, err = w.Write(data)
+		if err != nil {
+			log.Errorf("Error writing output: %v", err)
+		}
 	}
 
 	userHasPermission := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
@@ -186,7 +196,10 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 		w.Header().Set("Content-Type", "application/json")
 
 		// Write output
-		w.Write(data)
+		_, err = w.Write(data)
+		if err != nil {
+			log.Errorf("Error writing output: %v", err)
+		}
 	}
 
 	audit := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
@@ -226,7 +239,10 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 		// Marshal the response and write it to output
 		out, _ := json.Marshal(data)
 		w.Header().Add("Content-Type", "application/json")
-		w.Write(out)
+		_, err = w.Write(out)
+		if err != nil {
+			log.Errorf("Error writing output: %v", err)
+		}
 	}
 
 	history := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
@@ -260,7 +276,10 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 		// Marshal the response and write it to output
 		out, _ := json.Marshal(data)
 		w.Header().Add("Content-Type", "application/json")
-		w.Write(out)
+		_, err = w.Write(out)
+		if err != nil {
+			log.Errorf("Error writing output: %v", err)
+		}
 	}
 
 	// Create routes
