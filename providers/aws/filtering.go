@@ -17,7 +17,7 @@ type DynamoFiltering struct {
 func (f *DynamoFiltering) Operations() base.OperationMap {
 	return base.OperationMap{
 		"startswith":  f.StartsWith,
-		"ne":          f.NotEquals,
+		"ne":          f.NotEqual,
 		"contains":    f.Contains,
 		"notcontains": f.NotContains,
 		"exists":      f.Exists,
@@ -40,8 +40,8 @@ func (f *DynamoFiltering) Equals(key string, value interface{}) interface{} {
 	return expression.Name(key).Equal(expression.Value(value))
 }
 
-// NotEquals : Standard not equals operation
-func (f *DynamoFiltering) NotEquals(key string, value interface{}) interface{} {
+// NotEqual : Standard not equals operation
+func (f *DynamoFiltering) NotEqual(key string, value interface{}) interface{} {
 	return expression.Name(key).NotEqual(expression.Value(value))
 }
 

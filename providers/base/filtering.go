@@ -21,7 +21,7 @@ type Filtering interface {
 	Equals(string, interface{}) interface{}
 
 	// Optional
-	NotEquals(string, interface{}) interface{}
+	NotEqual(string, interface{}) interface{}
 	StartsWith(string, interface{}) interface{}
 	Contains(string, interface{}) interface{}
 	NotContains(string, interface{}) interface{}
@@ -29,7 +29,7 @@ type Filtering interface {
 	GreaterThan(string, interface{}) interface{}
 	LessThan(string, interface{}) interface{}
 	GreaterThanEqual(string, interface{}) interface{}
-	LessThanEquals(string, interface{}) interface{}
+	LessThanEqual(string, interface{}) interface{}
 	Between(string, interface{}) interface{}
 	In(string, interface{}) interface{}
 	NotIn(string, interface{}) interface{}

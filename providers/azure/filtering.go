@@ -17,7 +17,7 @@ type MongoDBFiltering struct {
 // Operations : Map of supported operations for this filter provider
 func (f *MongoDBFiltering) Operations() base.OperationMap {
 	return base.OperationMap{
-		"ne":         f.NotEquals,
+		"ne":         f.NotEqual,
 		"startswith": f.StartsWith,
 		"contains":   f.Contains,
 		// TODO: NotContains does not work right
@@ -61,8 +61,8 @@ func (f *MongoDBFiltering) Equals(key string, value interface{}) interface{} {
 	return bson.DocElem{Name: key, Value: value}
 }
 
-// NotEquals : Standard not equals operation
-func (f *MongoDBFiltering) NotEquals(key string, value interface{}) interface{} {
+// NotEqual : Standard not equals operation
+func (f *MongoDBFiltering) NotEqual(key string, value interface{}) interface{} {
 	return bson.DocElem{
 		Name: key,
 		Value: bson.D{{
