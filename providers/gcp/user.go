@@ -2,47 +2,25 @@ package gcp
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/MichaelPalmer1/simple-api-go/models"
 	log "github.com/sirupsen/logrus"
 )
 
-// InitializeRequest : Given a request, get the corresponding user and perform
-// user and request validation.
-func (api FirestoreAPI) InitializeRequest(req models.Request) (*models.User, error) {
-	user, err := api.GetUser(req.User.ID, req.User.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := api.ValidateUser(user); err != nil {
-		log.Warnf("[%s] Bad User - %s", api.UserIdentifier(user), err)
-		return nil, err
-	}
-
-	if err := api.ValidateRequest(req, user); err != nil {
-		log.Warnf("[%s] %s", api.UserIdentifier(user), err)
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func (api FirestoreAPI) GetUser(id string, userData *models.UserData) (*models.User, error) {
-	isUser := true
-	user := models.User{ID: id}
-	authCollection := api.Client.Collection(api.Config.AuthTable)
-	groupCollection := api.Client.Collection(api.Config.GroupTable)
+// GetAuth : Fetch an auth identity from the collection
+// Responses:
+//  - nil, nil: user does not exist
+//  - nil, error: error while fetching user
+//  - user, nil: found user
+func (api FirestoreAPI) GetAuth(id string) (*models.User, error) {
+	collection := api.Client.Collection(api.Config.AuthTable)
+	user := &models.User{ID: id}
 
 	// Try to find user in the auth table
-	result, err := authCollection.Doc(id).Get(api.context)
+	result, err := collection.Doc(id).Get(api.context)
 	if err != nil {
-		// TODO: Need better error handling to determine if the collection exists
-		log.Infof("Failed to get user: %v", err)
-
-		// Failed to find user in the table
-		isUser = false
+		log.Errorf("Error while fetching user: %v", err)
+		return nil, nil
 	} else {
 		// Found a user, unmarshal into user object
 		data, err := json.Marshal(result.Data())
@@ -52,123 +30,40 @@ func (api FirestoreAPI) GetUser(id string, userData *models.UserData) (*models.U
 		}
 		err = json.Unmarshal(data, &user)
 		if err != nil {
-			log.Errorf("Failed to unmarshal json: %v", err)
+			log.Errorf("Failed to unmarshal from json: %v", err)
 			return nil, err
 		}
 	}
 
-	// Try to find supplied entitlements in the auth table
-	entitlementIDs := []string{}
-	if userData != nil {
-		for _, id := range userData.Groups {
-			var entitlement models.User
-			result, err := authCollection.Doc(id).Get(api.context)
-			if err != nil {
-				// TODO: Need better error handling to determine if the collection exists
-				log.Errorln("Failed to get group", err)
+	return user, nil
+}
 
-				// User group is not in the table
-				continue
-			} else {
-				// Found group, unmarshal into group object
-				data, err := json.Marshal(result.Data())
-				if err != nil {
-					log.Errorf("Failed to marshal to json: %v", err)
-					return nil, err
-				}
-				err = json.Unmarshal(data, &entitlement)
-				if err != nil {
-					log.Errorf("Failed to unmarshal json: %v", err)
-					return nil, err
-				}
-			}
+// GetGroup : Fetch a group from the collection
+// Responses:
+//  - nil, nil: group does not exist
+//  - nil, error: error while fetching group
+//  - user, nil: found group
+func (api FirestoreAPI) GetGroup(id string) (*models.Group, error) {
+	collection := api.Client.Collection(api.Config.GroupTable)
+	group := &models.Group{ID: id}
 
-			// Store this as a real entitlement
-			entitlementIDs = append(entitlementIDs, id)
-
-			// Add sub-groups
-			user.Groups = append(user.Groups, entitlement.Groups...)
-
-			// Merge permitted endpoints
-			user.PermittedEndpoints = append(user.PermittedEndpoints, entitlement.PermittedEndpoints...)
-
-			// Merge exclude fields
-			user.ExcludeFields = append(user.ExcludeFields, entitlement.ExcludeFields...)
-
-			// Merge update fields restricted
-			user.UpdateFieldsRestricted = append(user.UpdateFieldsRestricted, entitlement.UpdateFieldsRestricted...)
-
-			// Merge update fields permitted
-			user.UpdateFieldsPermitted = append(user.UpdateFieldsPermitted, entitlement.UpdateFieldsPermitted...)
-
-			// Merge filter fields
-			user.FilterFields = append(user.FilterFields, entitlement.FilterFields...)
-		}
-	}
-
-	// Check that a user was found
-	if !isUser && len(entitlementIDs) == 0 {
-		return nil, &models.Unauthorized{
-			Message: fmt.Sprintf("Auth id '%s' is not authorized", id),
-		}
-	}
-
-	// If the user is a member of a group, merge in the group's permissions
-	for _, groupID := range user.Groups {
-		group := models.Group{}
-		result, err := groupCollection.Doc(groupID).Get(api.context)
+	// Try to find group in the group table
+	result, err := collection.Doc(id).Get(api.context)
+	if err != nil {
+		return nil, err
+	} else {
+		// Found a group, unmarshal into user object
+		data, err := json.Marshal(result.Data())
 		if err != nil {
-			log.Errorln("Failed to get group", err)
+			log.Errorf("Failed to marshal to json: %v", err)
 			return nil, err
-		} else if result.Data() == nil {
-			// Group is not in the table
-			return nil, &models.Unauthorized{
-				Message: fmt.Sprintf("Group '%s' does not exist", groupID),
-			}
-		} else {
-			// Found group, unmarshal into group object
-			data, err := json.Marshal(result.Data())
-			if err != nil {
-				log.Errorf("Failed to marshal to json: %v", err)
-				return nil, err
-			}
-			err = json.Unmarshal(data, &group)
-			if err != nil {
-				log.Errorf("Failed to unmarshal json: %v", err)
-				return nil, err
-			}
 		}
-
-		// Merge permissions
-		api.MergePermissions(&user, &group)
-	}
-
-	// Save user groups before applying metadata
-	userGroups := user.Groups
-
-	// Update user object with metadata
-	if userData != nil {
-		if userData.Username != "" {
-			user.Username = userData.Username
-		}
-		if userData.Name != "" {
-			user.Name = userData.Name
-		}
-		if userData.Email != "" {
-			user.Email = userData.Email
-		}
-		if len(userData.Groups) > 0 {
-			user.Groups = userData.Groups
+		err = json.Unmarshal(data, &group)
+		if err != nil {
+			log.Errorf("Failed to unmarshal from json: %v", err)
+			return nil, err
 		}
 	}
 
-	// Update user object with all applied entitlements
-	if len(entitlementIDs) > 0 {
-		var groups []string
-		groups = append(groups, userGroups...)
-		groups = append(groups, entitlementIDs...)
-		user.Groups = groups
-	}
-
-	return &user, nil
+	return group, nil
 }

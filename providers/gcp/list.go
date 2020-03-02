@@ -12,7 +12,7 @@ import (
 // List : List all records
 func (api FirestoreAPI) List(req models.Request) ([]models.Record, error) {
 	// Get the user
-	user, err := api.InitializeRequest(req)
+	user, err := api.InitializeRequest(api, req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err

@@ -14,7 +14,7 @@ func (api FirestoreAPI) Update(req models.Request, partitionKey map[string]strin
 	var output interface{}
 
 	// Get the user
-	user, err := api.InitializeRequest(req)
+	user, err := api.InitializeRequest(api, req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err

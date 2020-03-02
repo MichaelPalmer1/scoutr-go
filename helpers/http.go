@@ -172,7 +172,7 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 
 		// Check for authorization and save to output object
 		output := map[string]bool{
-			"authorized": api.CanAccessEndpoint(access.Method, access.Path, nil, &request),
+			"authorized": api.CanAccessEndpoint(api, access.Method, access.Path, nil, &request),
 		}
 
 		// Marshal data and write to output

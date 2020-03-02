@@ -13,7 +13,7 @@ import (
 // Create : Create an item
 func (api DynamoAPI) Create(req models.Request, item map[string]string, validation map[string]utils.FieldValidation) error {
 	// Get the user
-	user, err := api.InitializeRequest(req)
+	user, err := api.InitializeRequest(api, req)
 	if err != nil {
 		// Bad user - pass the error through
 		return err

@@ -20,7 +20,7 @@ func (api FirestoreAPI) History(req models.Request, key string, value string, qu
 	}
 
 	// Get the user
-	_, err := api.InitializeRequest(req)
+	_, err := api.InitializeRequest(api, req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err

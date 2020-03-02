@@ -21,7 +21,7 @@ func (api FirestoreAPI) ListAuditLogs(req models.Request, pathParams map[string]
 	}
 
 	// Get the user
-	_, err := api.InitializeRequest(req)
+	_, err := api.InitializeRequest(api, req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err

@@ -11,7 +11,7 @@ import (
 // Search : Search items in the table
 func (api DynamoAPI) Search(req models.Request, key string, values []string) ([]models.Record, error) {
 	// Get the user
-	user, err := api.InitializeRequest(req)
+	user, err := api.InitializeRequest(api, req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err

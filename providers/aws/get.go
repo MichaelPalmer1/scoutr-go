@@ -13,7 +13,7 @@ func (api DynamoAPI) Get(req models.Request, id string) (models.Record, error) {
 	var partitionKey string
 
 	// Get the user
-	user, err := api.InitializeRequest(req)
+	user, err := api.InitializeRequest(api, req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err

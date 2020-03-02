@@ -12,7 +12,7 @@ func (api MongoDBAPI) Get(req models.Request, id string) (models.Record, error) 
 	collection := api.Client.C(api.Config.DataTable)
 
 	// Get the user
-	user, err := api.InitializeRequest(req)
+	user, err := api.InitializeRequest(api, req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err

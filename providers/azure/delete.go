@@ -9,7 +9,7 @@ import (
 // Delete : Delete an item
 func (api MongoDBAPI) Delete(req models.Request, partitionKey map[string]string) error {
 	// Get the user
-	user, err := api.InitializeRequest(req)
+	user, err := api.InitializeRequest(api, req)
 	if err != nil {
 		// Bad user - pass the error through
 		return err

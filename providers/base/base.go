@@ -14,9 +14,9 @@ import (
 // implemented by the SimpleAPI struct
 type BaseAPI interface {
 	GetConfig() config.Config
-	CanAccessEndpoint(string, string, *models.User, *models.Request) bool
-	InitializeRequest(models.Request) (*models.User, error)
-	GetUser(string, *models.UserData) (*models.User, error)
+	CanAccessEndpoint(BaseAPI, string, string, *models.User, *models.Request) bool
+	InitializeRequest(BaseAPI, models.Request) (*models.User, error)
+	GetUser(BaseAPI, string, *models.UserData) (*models.User, error)
 	Create(models.Request, map[string]string, map[string]utils.FieldValidation) error
 	Update(models.Request, map[string]string, map[string]string, map[string]utils.FieldValidation, string) (interface{}, error)
 	Get(models.Request, string) (models.Record, error)
@@ -26,6 +26,8 @@ type BaseAPI interface {
 	History(models.Request, string, string, map[string]string, []string) ([]models.History, error)
 	Search(models.Request, string, []string) ([]models.Record, error)
 	Delete(models.Request, map[string]string) error
+	GetAuth(string) (*models.User, error)
+	GetGroup(string) (*models.Group, error)
 }
 
 // SimpleAPI : Base struct that implements BaseAPI and sets up some commonly used functions across
@@ -47,11 +49,11 @@ func (api *SimpleAPI) UserIdentifier(user *models.User) string {
 }
 
 // CanAccessEndpoint : Determine if a user has access to a specific endpoint
-func (api *SimpleAPI) CanAccessEndpoint(method string, path string, user *models.User, request *models.Request) bool {
+func (api *SimpleAPI) CanAccessEndpoint(baseApi BaseAPI, method string, path string, user *models.User, request *models.Request) bool {
 	var err error
 	if request != nil {
 		// Fetch the user
-		user, err = api.GetUser(request.User.ID, request.User.Data)
+		user, err = baseApi.GetUser(baseApi, request.User.ID, request.User.Data)
 		if err != nil {
 			log.Errorf("Failed to fetch user: %v", err)
 			return false
@@ -110,7 +112,7 @@ func (api *SimpleAPI) ValidateUser(user *models.User) error {
 // ValidateRequest : Validate the user has permissions to perform the request
 func (api *SimpleAPI) ValidateRequest(req models.Request, user *models.User) error {
 	// Make sure the user has permissions to access this endpoint
-	if api.CanAccessEndpoint(req.Method, req.Path, user, nil) {
+	if api.CanAccessEndpoint(api, req.Method, req.Path, user, nil) {
 		// Log request
 		userID := api.UserIdentifier(user)
 		if req.Method == "GET" {
@@ -183,4 +185,133 @@ func (api *SimpleAPI) BuildParams(req models.Request) map[string]string {
 	}
 
 	return params
+}
+
+// InitializeRequest : Given a request, get the corresponding user and perform
+// user and request validation.
+func (api SimpleAPI) InitializeRequest(baseApi BaseAPI, req models.Request) (*models.User, error) {
+	user, err := baseApi.GetUser(baseApi, req.User.ID, req.User.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := api.ValidateUser(user); err != nil {
+		log.Warnf("[%s] Bad User - %s", api.UserIdentifier(user), err)
+		return nil, err
+	}
+
+	if err := api.ValidateRequest(req, user); err != nil {
+		log.Warnf("[%s] %s", api.UserIdentifier(user), err)
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (api SimpleAPI) GetUser(baseApi BaseAPI, id string, userData *models.UserData) (*models.User, error) {
+	isUser := true
+	user := models.User{ID: id}
+
+	// Try to find user in the auth table
+	auth, err := baseApi.GetAuth(id)
+	if err != nil {
+		// Error while fetching user
+		log.Errorf("Failed to get user: %v", err)
+		return nil, err
+	} else if auth == nil {
+		// Failed to find user in the table
+		isUser = false
+	} else {
+		user = *auth
+	}
+
+	// Try to find supplied entitlements in the auth table
+	entitlementIDs := []string{}
+	if userData != nil {
+		for _, id := range userData.Groups {
+			entitlement, err := baseApi.GetAuth(id)
+			if err != nil {
+				return nil, err
+			} else if entitlement == nil {
+				log.Errorln("Failed to get entitlement", err)
+
+				// Entitlement not in the auth table
+				continue
+			}
+
+			// Store this as a real entitlement
+			entitlementIDs = append(entitlementIDs, id)
+
+			// Add sub-groups
+			user.Groups = append(user.Groups, entitlement.Groups...)
+
+			// Merge permitted endpoints
+			user.PermittedEndpoints = append(user.PermittedEndpoints, entitlement.PermittedEndpoints...)
+
+			// Merge exclude fields
+			user.ExcludeFields = append(user.ExcludeFields, entitlement.ExcludeFields...)
+
+			// Merge update fields restricted
+			user.UpdateFieldsRestricted = append(user.UpdateFieldsRestricted, entitlement.UpdateFieldsRestricted...)
+
+			// Merge update fields permitted
+			user.UpdateFieldsPermitted = append(user.UpdateFieldsPermitted, entitlement.UpdateFieldsPermitted...)
+
+			// Merge filter fields
+			user.FilterFields = append(user.FilterFields, entitlement.FilterFields...)
+		}
+	}
+
+	// Check that a user was found
+	if !isUser && len(entitlementIDs) == 0 {
+		return nil, &models.Unauthorized{
+			Message: fmt.Sprintf("Auth id '%s' is not authorized", id),
+		}
+	}
+
+	// If the user is a member of a group, merge in the group's permissions
+	for _, groupID := range user.Groups {
+		group, err := baseApi.GetGroup(groupID)
+		if err != nil {
+			log.Errorf("Error while fetching group: %v", err)
+			return nil, err
+		} else if group == nil {
+			// Group is not in the table
+			return nil, &models.Unauthorized{
+				Message: fmt.Sprintf("Group '%s' does not exist", groupID),
+			}
+		}
+
+		// Merge permissions
+		api.MergePermissions(&user, group)
+	}
+
+	// Save user groups before applying metadata
+	userGroups := user.Groups
+
+	// Update user object with metadata
+	if userData != nil {
+		if userData.Username != "" {
+			user.Username = userData.Username
+		}
+		if userData.Name != "" {
+			user.Name = userData.Name
+		}
+		if userData.Email != "" {
+			user.Email = userData.Email
+		}
+		if len(userData.Groups) > 0 {
+			user.Groups = userData.Groups
+		}
+	}
+
+	// Update user object with all applied entitlements
+	if len(entitlementIDs) > 0 {
+		var groups []string
+		groups = append(groups, userGroups...)
+		groups = append(groups, entitlementIDs...)
+		user.Groups = groups
+	}
+
+	return &user, nil
 }

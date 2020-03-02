@@ -13,7 +13,7 @@ import (
 // List : Lists all items in a table
 func (api DynamoAPI) List(req models.Request) ([]models.Record, error) {
 	// Get the user
-	user, err := api.InitializeRequest(req)
+	user, err := api.InitializeRequest(api, req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err
@@ -61,7 +61,7 @@ func (api DynamoAPI) List(req models.Request) ([]models.Record, error) {
 // ListUniqueValues : Lists unique values in a table
 func (api DynamoAPI) ListUniqueValues(req models.Request, uniqueKey string) ([]string, error) {
 	// Get the user
-	user, err := api.InitializeRequest(req)
+	user, err := api.InitializeRequest(api, req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err

@@ -8,7 +8,7 @@ import (
 // Delete : Delete an item
 func (api FirestoreAPI) Delete(req models.Request, partitionKey map[string]string) error {
 	// Get the user
-	user, err := api.InitializeRequest(req)
+	user, err := api.InitializeRequest(api, req)
 	if err != nil {
 		// Bad user - pass the error through
 		return err
