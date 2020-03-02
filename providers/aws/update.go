@@ -136,7 +136,7 @@ func (api DynamoAPI) Update(req models.Request, partitionKey map[string]string, 
 	}
 
 	// Create audit log
-	api.auditLog("UPDATE", req, *user, &partitionKey, &item)
+	api.auditLog(auditAction, req, *user, &partitionKey, &item)
 
 	return output, nil
 }

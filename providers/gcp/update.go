@@ -98,7 +98,7 @@ func (api FirestoreAPI) Update(req models.Request, partitionKey map[string]strin
 	}
 
 	// Create audit log
-	if err := api.auditLog("UPDATE", req, *user, &partitionKey, &item); err != nil {
+	if err := api.auditLog(auditAction, req, *user, &partitionKey, &item); err != nil {
 		log.Warnf("Failed to create audit log: %v", err)
 	}
 
