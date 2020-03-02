@@ -206,6 +206,7 @@ func (api SimpleAPI) InitializeRequest(baseApi BaseAPI, req models.Request) (*mo
 	return user, nil
 }
 
+// GetUser : Fetch a user from the backend, merging any permissions from group memberships
 func (api SimpleAPI) GetUser(baseApi BaseAPI, id string, userData *models.UserData) (*models.User, error) {
 	isUser := true
 	user := models.User{ID: id}
