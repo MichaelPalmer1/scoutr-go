@@ -40,7 +40,7 @@ func (api MongoDBAPI) GetUser(id string, userData *models.UserData) (*models.Use
 	var result interface{}
 	err := authCollection.Find(bson.M{"id": id}).One(&result)
 	if err != nil {
-		log.Errorf("Failed to get user: %v", err)
+		log.Infof("Failed to get user: %v", err)
 
 		// Failed to find user in the table
 		isUser = false

@@ -39,7 +39,7 @@ func (api FirestoreAPI) GetUser(id string, userData *models.UserData) (*models.U
 	result, err := authCollection.Doc(id).Get(api.context)
 	if err != nil {
 		// TODO: Need better error handling to determine if the collection exists
-		log.Errorln("Failed to get user", err)
+		log.Infof("Failed to get user: %v", err)
 
 		// Failed to find user in the table
 		isUser = false

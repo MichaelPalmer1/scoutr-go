@@ -44,7 +44,7 @@ func (api DynamoAPI) GetUser(id string, userData *models.UserData) (*models.User
 		},
 	})
 	if err != nil {
-		log.Errorln("Failed to get user", err)
+		log.Infof("Failed to get user: %v", err)
 		return nil, err
 	} else if result.Item == nil {
 		// Failed to find user in the table
