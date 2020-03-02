@@ -10,6 +10,7 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
+// MongoDBFiltering : Used by the MongoDBAPI to perform filters against a MongoDB backend
 type MongoDBFiltering struct {
 	base.Filtering
 }

@@ -57,7 +57,10 @@ func (api FirestoreAPI) Create(req models.Request, item map[string]string, valid
 	}
 
 	// Create audit log
-	api.auditLog("CREATE", req, *user, &map[string]string{api.Config.PrimaryKey: doc.ID}, nil)
+	partitionKey := map[string]string{api.Config.PrimaryKey: doc.ID}
+	if err := api.auditLog("CREATE", req, *user, &partitionKey, nil); err != nil {
+		log.Warnf("Failed to create audit log: %v", err)
+	}
 
 	return nil
 }

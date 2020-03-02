@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// List : Lists all items in a table
 func (api MongoDBAPI) List(req models.Request) ([]models.Record, error) {
 	records := []models.Record{}
 	collection := api.Client.C(api.Config.DataTable)
@@ -17,29 +18,8 @@ func (api MongoDBAPI) List(req models.Request) ([]models.Record, error) {
 		return nil, err
 	}
 
-	// Copy queryParams into params
-	params := make(map[string]string)
-	for key, value := range req.QueryParams {
-		params[key] = value
-	}
-
-	// Merge pathParams into params
-	for key, value := range req.PathParams {
-		params[key] = value
-	}
-
-	// Generate dynamic search
-	searchKey, hasSearchKey := req.PathParams["search_key"]
-	searchValue, hasSearchValue := req.PathParams["search_value"]
-	if hasSearchKey && hasSearchValue {
-		// Map the search key and value into path params
-		params[searchKey] = searchValue
-		delete(params, "search_key")
-		delete(params, "search_value")
-	}
-
 	// Build rawFilters
-	rawFilters, _, err := api.Filter(&api.Filtering, user, params)
+	rawFilters, _, err := api.Filter(&api.Filtering, user, api.BuildParams(req))
 	if err != nil {
 		log.Errorf("Error generating rawFilters: %v", err)
 		return nil, err

@@ -156,3 +156,31 @@ func (api *SimpleAPI) MergePermissions(user *models.User, group *models.Group) {
 	// Merge filter fields
 	user.FilterFields = append(user.FilterFields, group.FilterFields...)
 }
+
+// BuildParams : Takes in a request object and generates a parameters map
+// that can be used in Filter calls
+func (api *SimpleAPI) BuildParams(req models.Request) map[string]string {
+	params := make(map[string]string)
+
+	// Copy query params into params
+	for key, value := range req.QueryParams {
+		params[key] = value
+	}
+
+	// Merge path params into params
+	for key, value := range req.PathParams {
+		params[key] = value
+	}
+
+	// Generate dynamic search
+	searchKey, hasSearchKey := req.PathParams["search_key"]
+	searchValue, hasSearchValue := req.PathParams["search_value"]
+	if hasSearchKey && hasSearchValue {
+		// Map the search key and value into path params
+		params[searchKey] = searchValue
+		delete(params, "search_key")
+		delete(params, "search_value")
+	}
+
+	return params
+}

@@ -39,7 +39,7 @@ func (api FirestoreAPI) Update(req models.Request, partitionKey map[string]strin
 	}
 
 	// Check all keys of the update input
-	for key, _ := range item {
+	for _, key := range item {
 		// Make sure fields being updated are not excluded from user
 		for _, field := range user.ExcludeFields {
 			if field == key {
@@ -98,7 +98,9 @@ func (api FirestoreAPI) Update(req models.Request, partitionKey map[string]strin
 	}
 
 	// Create audit log
-	api.auditLog("UPDATE", req, *user, &partitionKey, &item)
+	if err := api.auditLog("UPDATE", req, *user, &partitionKey, &item); err != nil {
+		log.Warnf("Failed to create audit log: %v", err)
+	}
 
 	return output, nil
 }

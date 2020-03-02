@@ -28,7 +28,9 @@ func (api FirestoreAPI) Delete(req models.Request, partitionKey map[string]strin
 	}
 
 	// Create audit log
-	api.auditLog("DELETE", req, *user, &partitionKey, nil)
+	if err := api.auditLog("DELETE", req, *user, &partitionKey, nil); err != nil {
+		log.Warnf("Failed to create audit log: %v", err)
+	}
 
 	return nil
 }

@@ -3,6 +3,7 @@ package gcp
 import (
 	"cloud.google.com/go/firestore"
 	"github.com/MichaelPalmer1/simple-api-go/models"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,7 +26,10 @@ func (api FirestoreAPI) Get(req models.Request, id string) (models.Record, error
 	}
 
 	// Create audit log
-	api.auditLog("GET", req, *user, &map[string]string{api.Config.PrimaryKey: id}, nil)
+	partitionKey := map[string]string{api.Config.PrimaryKey: id}
+	if err := api.auditLog("GET", req, *user, &partitionKey, nil); err != nil {
+		log.Warnf("Failed to create audit log: %v", err)
+	}
 
 	return record, nil
 }

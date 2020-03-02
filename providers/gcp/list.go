@@ -3,6 +3,7 @@ package gcp
 import (
 	"cloud.google.com/go/firestore"
 	"github.com/MichaelPalmer1/simple-api-go/models"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,33 +18,12 @@ func (api FirestoreAPI) List(req models.Request) ([]models.Record, error) {
 		return nil, err
 	}
 
-	// Copy queryParams into params
-	params := make(map[string]string)
-	for key, value := range req.QueryParams {
-		params[key] = value
-	}
-
-	// Merge pathParams into params
-	for key, value := range req.PathParams {
-		params[key] = value
-	}
-
-	// Generate dynamic search
-	searchKey, hasSearchKey := req.PathParams["search_key"]
-	searchValue, hasSearchValue := req.PathParams["search_value"]
-	if hasSearchKey && hasSearchValue {
-		// Map the search key and value into path params
-		params[searchKey] = searchValue
-		delete(params, "search_key")
-		delete(params, "search_value")
-	}
-
 	// Build filters
 	collection := api.Client.Collection(api.Config.DataTable)
 	f := FirestoreFiltering{
 		Query: collection.Query,
 	}
-	filters, _, err := api.Filter(&f, user, params)
+	filters, _, err := api.Filter(&f, user, api.BuildParams(req))
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +68,9 @@ func (api FirestoreAPI) List(req models.Request) ([]models.Record, error) {
 	api.PostProcess(records, user)
 
 	// Create audit log
-	api.auditLog("LIST", req, *user, nil, nil)
+	if err := api.auditLog("LIST", req, *user, nil, nil); err != nil {
+		log.Warnf("Failed to create audit log: %v", err)
+	}
 
 	return records, nil
 }

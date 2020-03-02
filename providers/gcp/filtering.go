@@ -5,6 +5,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/MichaelPalmer1/simple-api-go/providers/base"
+	log "github.com/sirupsen/logrus"
 )
 
 type FirestoreFiltering struct {
@@ -63,7 +64,11 @@ func (f *FirestoreFiltering) LessThanEqual(key string, value interface{}) interf
 // Between : Check for records that are between a low and high value
 func (f *FirestoreFiltering) Between(key string, value interface{}) interface{} {
 	var valueList []string
-	json.Unmarshal([]byte(value.(string)), &valueList)
+	err := json.Unmarshal([]byte(value.(string)), &valueList)
+	if err != nil {
+		log.Errorf("Failed to unmarshal value list for BETWEEN operation: %v", err)
+		return nil
+	}
 	f.Query = f.Query.Where(key, ">=", valueList[0]).Where(key, "<=", valueList[1])
 	return f.Query
 }
@@ -71,7 +76,11 @@ func (f *FirestoreFiltering) Between(key string, value interface{}) interface{} 
 // In : Find all records with a list of values
 func (f *FirestoreFiltering) In(key string, values interface{}) interface{} {
 	var valueList []string
-	json.Unmarshal([]byte(values.(string)), &valueList)
+	err := json.Unmarshal([]byte(values.(string)), &valueList)
+	if err != nil {
+		log.Errorf("Failed to unmarshal value list for IN operation: %v", err)
+		return nil
+	}
 	f.Query = f.Query.Where(key, "in", valueList)
 	return f.Query
 }

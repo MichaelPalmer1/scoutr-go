@@ -67,7 +67,9 @@ func (api FirestoreAPI) Search(req models.Request, key string, values []string) 
 	api.PostProcess(records, user)
 
 	// Create audit log
-	api.auditLog("SEARCH", req, *user, nil, nil)
+	if err := api.auditLog("SEARCH", req, *user, nil, nil); err != nil {
+		log.Warnf("Failed to create audit log: %v", err)
+	}
 
 	return records, nil
 }

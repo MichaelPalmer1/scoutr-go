@@ -153,7 +153,7 @@ func (api FirestoreAPI) auditLog(action string, request models.Request, user mod
 	_, err := collection.Doc(auditLog.Time).Create(api.context, auditLog)
 	if err != nil {
 		log.Errorln("Failed to save audit log", err)
-		log.Infof("Failed audit log: '%s'", auditLog)
+		log.Infof("Failed audit log: '%v'", auditLog)
 		return err
 	}
 

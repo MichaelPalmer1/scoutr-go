@@ -23,29 +23,8 @@ func (api DynamoAPI) List(req models.Request) ([]models.Record, error) {
 		TableName: aws.String(api.Config.DataTable),
 	}
 
-	// Copy queryParams into params
-	params := make(map[string]string)
-	for key, value := range req.QueryParams {
-		params[key] = value
-	}
-
-	// Merge pathParams into params
-	for key, value := range req.PathParams {
-		params[key] = value
-	}
-
-	// Generate dynamic search
-	searchKey, hasSearchKey := req.PathParams["search_key"]
-	searchValue, hasSearchValue := req.PathParams["search_value"]
-	if hasSearchKey && hasSearchValue {
-		// Map the search key and value into path params
-		params[searchKey] = searchValue
-		delete(params, "search_key")
-		delete(params, "search_value")
-	}
-
 	// Build filters
-	rawConds, hasConditions, err := api.Filter(&api.Filtering, user, params)
+	rawConds, hasConditions, err := api.Filter(&api.Filtering, user, api.BuildParams(req))
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err

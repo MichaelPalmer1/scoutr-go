@@ -12,12 +12,14 @@ import (
 	"github.com/MichaelPalmer1/simple-api-go/providers/base"
 )
 
+// MongoDBAPI : Implementation of SimpleAPI that interacts with MongoDB backends
 type MongoDBAPI struct {
 	*base.SimpleAPI
 	Filtering MongoDBFiltering
 	Client    *mgo.Database
 }
 
+// Init : Initialize connection to MongoDB
 func (api *MongoDBAPI) Init(address, database, username, password string) {
 	dialInfo := &mgo.DialInfo{
 		Addrs:    []string{address},
@@ -38,6 +40,7 @@ func (api *MongoDBAPI) Init(address, database, username, password string) {
 	api.Client = session.DB(database)
 }
 
+// Close : Close connection with MongoDB
 func (api *MongoDBAPI) Close() {
 	api.Client.Session.Close()
 }
