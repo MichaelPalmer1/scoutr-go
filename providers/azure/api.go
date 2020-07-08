@@ -9,12 +9,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/MichaelPalmer1/simple-api-go/providers/base"
+	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 )
 
-// MongoDBAPI : Implementation of SimpleAPI that interacts with MongoDB backends
+// MongoDBAPI : Implementation of Scoutr that interacts with MongoDB backends
 type MongoDBAPI struct {
-	*base.SimpleAPI
+	*base.Scoutr
 	Filtering MongoDBFiltering
 	Client    *mgo.Database
 }

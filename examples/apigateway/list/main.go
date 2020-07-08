@@ -5,8 +5,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/MichaelPalmer1/simple-api-go/config"
-	"github.com/MichaelPalmer1/simple-api-go/helpers"
+	"github.com/MichaelPalmer1/scoutr-go/config"
+	"github.com/MichaelPalmer1/scoutr-go/helpers"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )

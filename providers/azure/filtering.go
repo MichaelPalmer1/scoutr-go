@@ -6,7 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/MichaelPalmer1/simple-api-go/providers/base"
+	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 	"github.com/globalsign/mgo/bson"
 )
 

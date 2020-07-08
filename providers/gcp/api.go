@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"cloud.google.com/go/firestore"
-	"github.com/MichaelPalmer1/simple-api-go/providers/base"
+	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
 )
 
-// FirestoreAPI : API, based off of SimpleAPI, used to talk to Google Firestore
+// FirestoreAPI : API, based off of Scoutr, used to talk to Google Firestore
 type FirestoreAPI struct {
-	*base.SimpleAPI
+	*base.Scoutr
 	Filtering FirestoreFiltering
 	Client    *firestore.Client
 	context   context.Context

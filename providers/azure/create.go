@@ -1,8 +1,8 @@
 package azure
 
 import (
-	"github.com/MichaelPalmer1/simple-api-go/models"
-	"github.com/MichaelPalmer1/simple-api-go/utils"
+	"github.com/MichaelPalmer1/scoutr-go/models"
+	"github.com/MichaelPalmer1/scoutr-go/utils"
 	log "github.com/sirupsen/logrus"
 )
 

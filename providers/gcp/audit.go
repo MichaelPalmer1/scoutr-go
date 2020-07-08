@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
-	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/MichaelPalmer1/scoutr-go/models"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"

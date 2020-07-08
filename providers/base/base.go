@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/MichaelPalmer1/simple-api-go/config"
-	"github.com/MichaelPalmer1/simple-api-go/models"
-	"github.com/MichaelPalmer1/simple-api-go/utils"
+	"github.com/MichaelPalmer1/scoutr-go/config"
+	"github.com/MichaelPalmer1/scoutr-go/models"
+	"github.com/MichaelPalmer1/scoutr-go/utils"
 	log "github.com/sirupsen/logrus"
 )
 
-// BaseAPI : Low level interface that defines all the functions used by a SimpleAPI provider. Some of these would be
-// implemented by the SimpleAPI struct
+// BaseAPI : Low level interface that defines all the functions used by a Scoutr provider. Some of these would be
+// implemented by the Scoutr struct
 type BaseAPI interface {
 	GetConfig() config.Config
 	GetAuth(string) (*models.User, error)
@@ -28,26 +28,26 @@ type BaseAPI interface {
 	Delete(models.Request, map[string]string) error
 }
 
-// SimpleAPI : Base struct that implements BaseAPI and sets up some commonly used functions across
+// Scoutr : Base struct that implements BaseAPI and sets up some commonly used functions across
 // various cloud providers
-type SimpleAPI struct {
+type Scoutr struct {
 	BaseAPI
 	Filtering Filtering
 	Config    config.Config
 }
 
 // GetConfig : Return config
-func (api *SimpleAPI) GetConfig() config.Config {
+func (api *Scoutr) GetConfig() config.Config {
 	return api.Config
 }
 
 // UserIdentifier : Generate a user identifier for logs
-func (api *SimpleAPI) UserIdentifier(user *models.User) string {
+func (api *Scoutr) UserIdentifier(user *models.User) string {
 	return fmt.Sprintf("%s: %s (%s - %s)", user.ID, user.Name, user.Username, user.Email)
 }
 
 // CanAccessEndpoint : Determine if a user has access to a specific endpoint
-func (api *SimpleAPI) CanAccessEndpoint(baseApi BaseAPI, method string, path string, user *models.User, request *models.Request) bool {
+func (api *Scoutr) CanAccessEndpoint(baseApi BaseAPI, method string, path string, user *models.User, request *models.Request) bool {
 	var err error
 	if request != nil {
 		// Fetch the user
@@ -83,7 +83,7 @@ func (api *SimpleAPI) CanAccessEndpoint(baseApi BaseAPI, method string, path str
 }
 
 // ValidateUser : Validate the user object has all required fields
-func (api *SimpleAPI) ValidateUser(user *models.User) error {
+func (api *Scoutr) ValidateUser(user *models.User) error {
 	// Make sure the user contains the required keys
 	if user.ID == "" || user.Username == "" || user.Name == "" || user.Email == "" {
 		return &models.Unauthorized{
@@ -108,7 +108,7 @@ func (api *SimpleAPI) ValidateUser(user *models.User) error {
 }
 
 // ValidateRequest : Validate the user has permissions to perform the request
-func (api *SimpleAPI) ValidateRequest(req models.Request, user *models.User) error {
+func (api *Scoutr) ValidateRequest(req models.Request, user *models.User) error {
 	// Make sure the user has permissions to access this endpoint
 	if api.CanAccessEndpoint(api, req.Method, req.Path, user, nil) {
 		// Log request
@@ -129,7 +129,7 @@ func (api *SimpleAPI) ValidateRequest(req models.Request, user *models.User) err
 }
 
 // PostProcess : Perform post processing on records before returning to user
-func (api *SimpleAPI) PostProcess(data []models.Record, user *models.User) {
+func (api *Scoutr) PostProcess(data []models.Record, user *models.User) {
 	for _, item := range data {
 		for _, key := range user.ExcludeFields {
 			if _, ok := item[key]; ok {
@@ -140,7 +140,7 @@ func (api *SimpleAPI) PostProcess(data []models.Record, user *models.User) {
 }
 
 // MergePermissions : Merge permissions expressed in a group into the user object
-func (api *SimpleAPI) MergePermissions(user *models.User, group *models.Group) {
+func (api *Scoutr) MergePermissions(user *models.User, group *models.Group) {
 	// Merge permitted endpoints
 	user.PermittedEndpoints = append(user.PermittedEndpoints, group.PermittedEndpoints...)
 
@@ -159,7 +159,7 @@ func (api *SimpleAPI) MergePermissions(user *models.User, group *models.Group) {
 
 // BuildParams : Takes in a request object and generates a parameters map
 // that can be used in Filter calls
-func (api *SimpleAPI) BuildParams(req models.Request) map[string]string {
+func (api *Scoutr) BuildParams(req models.Request) map[string]string {
 	params := make(map[string]string)
 
 	// Copy query params into params
@@ -187,7 +187,7 @@ func (api *SimpleAPI) BuildParams(req models.Request) map[string]string {
 
 // InitializeRequest : Given a request, get the corresponding user and perform
 // user and request validation.
-func (api SimpleAPI) InitializeRequest(baseApi BaseAPI, req models.Request) (*models.User, error) {
+func (api Scoutr) InitializeRequest(baseApi BaseAPI, req models.Request) (*models.User, error) {
 	user, err := api.GetUser(baseApi, req.User.ID, req.User.Data)
 	if err != nil {
 		return nil, err
@@ -207,7 +207,7 @@ func (api SimpleAPI) InitializeRequest(baseApi BaseAPI, req models.Request) (*mo
 }
 
 // GetUser : Fetch a user from the backend, merging any permissions from group memberships
-func (api SimpleAPI) GetUser(baseApi BaseAPI, id string, userData *models.UserData) (*models.User, error) {
+func (api Scoutr) GetUser(baseApi BaseAPI, id string, userData *models.UserData) (*models.User, error) {
 	isUser := true
 	user := models.User{ID: id}
 

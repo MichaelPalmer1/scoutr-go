@@ -4,16 +4,16 @@ import (
 	"flag"
 	"net/http"
 
-	"github.com/MichaelPalmer1/simple-api-go/config"
-	"github.com/MichaelPalmer1/simple-api-go/helpers"
-	"github.com/MichaelPalmer1/simple-api-go/providers/azure"
-	"github.com/MichaelPalmer1/simple-api-go/providers/base"
+	"github.com/MichaelPalmer1/scoutr-go/config"
+	"github.com/MichaelPalmer1/scoutr-go/helpers"
+	"github.com/MichaelPalmer1/scoutr-go/providers/azure"
+	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 	log "github.com/sirupsen/logrus"
 )
 
 func init() {
 	api = azure.MongoDBAPI{
-		SimpleAPI: &base.SimpleAPI{
+		Scoutr: &base.Scoutr{
 			Config: config.Config{
 				PrimaryKey: "id",
 			},

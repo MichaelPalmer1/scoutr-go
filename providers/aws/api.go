@@ -1,17 +1,17 @@
 package aws
 
 import (
-	"github.com/MichaelPalmer1/simple-api-go/models"
-	"github.com/MichaelPalmer1/simple-api-go/providers/base"
+	"github.com/MichaelPalmer1/scoutr-go/models"
+	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
-// DynamoAPI : API, based off of SimpleAPI, used to talk to AWS DynamoDB
+// DynamoAPI : API, based off of Scoutr, used to talk to AWS DynamoDB
 type DynamoAPI struct {
-	*base.SimpleAPI
+	*base.Scoutr
 	Client    *dynamodb.DynamoDB
 	Filtering DynamoFiltering
 }

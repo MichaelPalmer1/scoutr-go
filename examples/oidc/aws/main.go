@@ -6,10 +6,10 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"github.com/MichaelPalmer1/simple-api-go/config"
-	"github.com/MichaelPalmer1/simple-api-go/helpers"
-	dynamo "github.com/MichaelPalmer1/simple-api-go/providers/aws"
-	"github.com/MichaelPalmer1/simple-api-go/providers/base"
+	"github.com/MichaelPalmer1/scoutr-go/config"
+	"github.com/MichaelPalmer1/scoutr-go/helpers"
+	dynamo "github.com/MichaelPalmer1/scoutr-go/providers/aws"
+	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	log "github.com/sirupsen/logrus"
@@ -17,7 +17,7 @@ import (
 
 func init() {
 	api = dynamo.DynamoAPI{
-		SimpleAPI: &base.SimpleAPI{
+		Scoutr: &base.Scoutr{
 			Config: config.Config{},
 		},
 	}

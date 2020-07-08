@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"cloud.google.com/go/firestore"
-	"github.com/MichaelPalmer1/simple-api-go/providers/base"
+	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/MichaelPalmer1/simple-api-go/providers/azure"
+	"github.com/MichaelPalmer1/scoutr-go/providers/azure"
 
-	"github.com/MichaelPalmer1/simple-api-go/utils"
+	"github.com/MichaelPalmer1/scoutr-go/utils"
 )
 
 var api azure.MongoDBAPI

@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/MichaelPalmer1/simple-api-go/providers/gcp"
-	"github.com/MichaelPalmer1/simple-api-go/utils"
+	"github.com/MichaelPalmer1/scoutr-go/providers/gcp"
+	"github.com/MichaelPalmer1/scoutr-go/utils"
 )
 
 var api gcp.FirestoreAPI

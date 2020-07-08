@@ -3,7 +3,7 @@ package utils
 import (
 	"strings"
 
-	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/MichaelPalmer1/scoutr-go/models"
 )
 
 // FieldValidation : Callable

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/MichaelPalmer1/simple-api-go/config"
-	"github.com/MichaelPalmer1/simple-api-go/models"
-	dynamo "github.com/MichaelPalmer1/simple-api-go/providers/aws"
-	"github.com/MichaelPalmer1/simple-api-go/providers/base"
+	"github.com/MichaelPalmer1/scoutr-go/config"
+	"github.com/MichaelPalmer1/scoutr-go/models"
+	dynamo "github.com/MichaelPalmer1/scoutr-go/providers/aws"
+	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 	"github.com/aws/aws-lambda-go/events"
 	log "github.com/sirupsen/logrus"
 )
@@ -42,7 +42,7 @@ func InitAPIGateway(event events.APIGatewayProxyRequest, config config.Config) (
 
 	// Create API
 	api := dynamo.DynamoAPI{
-		SimpleAPI: &base.SimpleAPI{
+		Scoutr: &base.Scoutr{
 			Config: config,
 		},
 	}

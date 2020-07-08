@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/MichaelPalmer1/simple-api-go/helpers"
-	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/MichaelPalmer1/scoutr-go/helpers"
+	"github.com/MichaelPalmer1/scoutr-go/models"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/julienschmidt/httprouter"

@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	dynamo "github.com/MichaelPalmer1/simple-api-go/providers/aws"
-	"github.com/MichaelPalmer1/simple-api-go/utils"
+	dynamo "github.com/MichaelPalmer1/scoutr-go/providers/aws"
+	"github.com/MichaelPalmer1/scoutr-go/utils"
 )
 
 var api dynamo.DynamoAPI

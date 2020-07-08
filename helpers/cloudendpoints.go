@@ -3,7 +3,7 @@ package helpers
 import (
 	"net/http"
 
-	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/MichaelPalmer1/scoutr-go/models"
 )
 
 // TODO: Add helper functions for Google Cloud Endpoints

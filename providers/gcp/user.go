@@ -3,7 +3,7 @@ package gcp
 import (
 	"encoding/json"
 
-	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/MichaelPalmer1/scoutr-go/models"
 	log "github.com/sirupsen/logrus"
 )
 

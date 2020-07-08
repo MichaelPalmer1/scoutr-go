@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/MichaelPalmer1/simple-api-go/models"
+	"github.com/MichaelPalmer1/scoutr-go/models"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -36,7 +36,7 @@ type Filtering interface {
 }
 
 // Filter : Build a filter
-func (api *SimpleAPI) Filter(f Filtering, user *models.User, filters map[string]string) (interface{}, bool, error) {
+func (api *Scoutr) Filter(f Filtering, user *models.User, filters map[string]string) (interface{}, bool, error) {
 	var conditions interface{}
 	initialized := false
 	re := regexp.MustCompile(`^(.+)__(.+)$`)
@@ -138,7 +138,7 @@ func (api *SimpleAPI) Filter(f Filtering, user *models.User, filters map[string]
 }
 
 // MultiFilter : Build multi-filter using the IN operator to search a key for 1 or more values
-func (api *SimpleAPI) MultiFilter(f Filtering, user *models.User, key string, values []string) (interface{}, error) {
+func (api *Scoutr) MultiFilter(f Filtering, user *models.User, key string, values []string) (interface{}, error) {
 	// Build the default user filters
 	conditions, hasValues, err := api.Filter(f, user, nil)
 	if err != nil {

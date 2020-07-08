@@ -4,17 +4,17 @@ import (
 	"flag"
 	"net/http"
 
-	"github.com/MichaelPalmer1/simple-api-go/config"
-	"github.com/MichaelPalmer1/simple-api-go/helpers"
-	"github.com/MichaelPalmer1/simple-api-go/providers/base"
-	"github.com/MichaelPalmer1/simple-api-go/providers/gcp"
+	"github.com/MichaelPalmer1/scoutr-go/config"
+	"github.com/MichaelPalmer1/scoutr-go/helpers"
+	"github.com/MichaelPalmer1/scoutr-go/providers/base"
+	"github.com/MichaelPalmer1/scoutr-go/providers/gcp"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
 )
 
 func init() {
 	api = gcp.FirestoreAPI{
-		SimpleAPI: &base.SimpleAPI{
+		Scoutr: &base.Scoutr{
 			Config: config.Config{
 				PrimaryKey: "id",
 			},
@@ -47,7 +47,7 @@ func main() {
 	}
 
 	// Initialize the client
-	api.Init("simple-api-265401", option.WithCredentialsFile("/home/michael/Downloads/gcp.json"))
+	api.Init("scoutr-1234", option.WithCredentialsFile("/home/scoutr/gcp.json"))
 	defer api.Close()
 
 	// Initialize http server
