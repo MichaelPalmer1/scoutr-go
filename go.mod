@@ -10,6 +10,6 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/sirupsen/logrus v1.6.0
 	go.mongodb.org/mongo-driver v1.3.0 // indirect
-	google.golang.org/api v0.17.0
-	google.golang.org/grpc v1.27.0
+	google.golang.org/api v0.28.0
+	google.golang.org/grpc v1.28.0
 )
