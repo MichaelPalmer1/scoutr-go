@@ -2,7 +2,7 @@ package aws
 
 import (
 	"github.com/MichaelPalmer1/scoutr-go/models"
-	"github.com/MichaelPalmer1/scoutr-go/utils"
+	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -11,35 +11,14 @@ import (
 )
 
 // Create : Create an item
-func (api DynamoAPI) Create(req models.Request, item map[string]string, validation map[string]utils.FieldValidation) error {
+func (api DynamoAPI) Create(req models.Request, item map[string]interface{}, validation map[string]models.FieldValidation, requiredFields []string) error {
+	var conditions interface{}
+
 	// Get the user
-	user, err := api.InitializeRequest(api, req)
+	user, err := api.PrepareCreate(api, req, item, validation, requiredFields)
 	if err != nil {
 		// Bad user - pass the error through
 		return err
-	}
-
-	// Run data validation
-	if validation != nil {
-		log.Infoln("Running field validation")
-		err := utils.ValidateFields(validation, item, nil, false)
-		if err != nil {
-			log.Errorln("Field validation error", err)
-			return err
-		}
-	}
-
-	// Marshal item into a dynamo map
-	data, err := dynamodbattribute.MarshalMap(item)
-	if err != nil {
-		log.Errorln("Failed to marshal data", err)
-		return err
-	}
-
-	// Build input
-	input := dynamodb.PutItemInput{
-		TableName: aws.String(api.Config.DataTable),
-		Item:      data,
 	}
 
 	// Get key schema
@@ -51,50 +30,42 @@ func (api DynamoAPI) Create(req models.Request, item map[string]string, validati
 		return err
 	}
 
-	// Build filters
-	rawConds, hasConditions, err := api.Filter(&api.Filtering, user, nil)
-	if err != nil {
-		log.Errorln("Error encountered during filtering", err)
-		return err
-	}
-
-	// Cast to condition builder
-	var conditions expression.ConditionBuilder
-	if hasConditions {
-		conditions = rawConds.(expression.ConditionBuilder)
-	}
-
 	// Append key schema conditions
 	partitionKey := ""
 	for _, schema := range output.Table.KeySchema {
 		if *schema.KeyType == "HASH" {
 			partitionKey = *schema.AttributeName
 		}
-		condition := expression.Name(*schema.AttributeName).AttributeNotExists()
-		if !hasConditions {
-			conditions = condition
-			hasConditions = true
-		} else {
-			conditions = conditions.And(condition)
-		}
+		conditions = api.Filtering.And(conditions, expression.Name(*schema.AttributeName).AttributeNotExists())
+	}
+
+	// Marshal item into a dynamo map
+	data, err := dynamodbattribute.MarshalMap(item)
+	if err != nil {
+		log.Errorln("Failed to marshal data", err)
+		return err
 	}
 
 	// Build expression
-	expr, err := expression.NewBuilder().WithCondition(conditions).Build()
+	expr, err := expression.NewBuilder().WithCondition(conditions.(expression.ConditionBuilder)).Build()
 	if err != nil {
 		log.Errorln("Encountered error while building expression", err)
 		return err
 	}
 
-	// Update input
-	input.ConditionExpression = expr.Condition()
-	input.ExpressionAttributeNames = expr.Names()
-	input.ExpressionAttributeValues = expr.Values()
+	// Build input
+	input := dynamodb.PutItemInput{
+		TableName:                 aws.String(api.Config.DataTable),
+		Item:                      data,
+		ConditionExpression:       expr.Condition(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+	}
 
-	// Put the item into dynamo
+	// Put the item into the table
 	_, err = api.Client.PutItem(&input)
 	if err != nil {
-		log.Errorln("Error while attempting to add item to dynamo", err)
+		log.WithError(err).Errorln("Encountered error while attempting to create record")
 
 		// Check if this was a conditional check failure
 		if _, ok := err.(*dynamodb.ConditionalCheckFailedException); ok {
@@ -107,7 +78,7 @@ func (api DynamoAPI) Create(req models.Request, item map[string]string, validati
 	}
 
 	// Create audit log
-	api.auditLog("CREATE", req, *user, &map[string]string{partitionKey: item[partitionKey]}, nil)
+	api.auditLog(base.AuditActionCreate, req, *user, &map[string]string{partitionKey: item[partitionKey].(string)}, nil)
 
 	return nil
 }

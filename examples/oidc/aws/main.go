@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os/user"
 	"path/filepath"
+	"strings"
 
 	"github.com/MichaelPalmer1/scoutr-go/config"
 	"github.com/MichaelPalmer1/scoutr-go/helpers"
@@ -25,16 +26,19 @@ func init() {
 
 func main() {
 	// Command line arguments
+	var nameHeader string
 	flag.StringVar(&api.Config.DataTable, "data-table", "", "Data table")
 	flag.StringVar(&api.Config.AuthTable, "auth-table", "", "Auth table")
 	flag.StringVar(&api.Config.GroupTable, "group-table", "", "Group table")
 	flag.StringVar(&api.Config.AuditTable, "audit-table", "", "Audit table")
 	flag.IntVar(&api.Config.LogRetentionDays, "log-retention-days", 30, "Days to retain read logs")
 	flag.StringVar(&api.Config.OIDCUsernameHeader, "oidc-username-header", "Oidc-Claim-Sub", "Username header from OIDC")
-	flag.StringVar(&api.Config.OIDCNameHeader, "oidc-name-header", "Oidc-Claim-Name", "Name header from OIDC")
+	flag.StringVar(&nameHeader, "oidc-name-header", "Oidc-Claim-Name", "Name header from OIDC")
 	flag.StringVar(&api.Config.OIDCEmailHeader, "oidc-email-header", "Oidc-Claim-Mail", "Email header from OIDC")
 	flag.StringVar(&api.Config.OIDCGroupHeader, "oidc-group-header", "", "Group header from OIDC")
 	flag.Parse()
+
+	api.Config.OIDCNameHeader = strings.Split(nameHeader, ",")
 
 	// Make sure required fields are provided
 	if api.Config.DataTable == "" {
@@ -55,7 +59,7 @@ func main() {
 	})
 
 	// Initialize http server
-	router, err := helpers.InitHTTPServer(api, "id", "/items/", []string{"CREATE", "UPDATE"})
+	router, err := helpers.InitHTTPServer(api, "/items/")
 	if err != nil {
 		panic(err)
 	}

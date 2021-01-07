@@ -6,13 +6,12 @@ import (
 
 	"github.com/MichaelPalmer1/scoutr-go/config"
 	"github.com/MichaelPalmer1/scoutr-go/helpers"
-	"github.com/MichaelPalmer1/scoutr-go/providers/azure"
 	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 	log "github.com/sirupsen/logrus"
 )
 
 func init() {
-	api = azure.MongoDBAPI{
+	api = mongo.MongoDBAPI{
 		Scoutr: &base.Scoutr{
 			Config: config.Config{
 				PrimaryKey: "id",

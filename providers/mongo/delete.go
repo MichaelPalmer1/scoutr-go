@@ -1,4 +1,4 @@
-package azure
+package mongo
 
 import (
 	"github.com/MichaelPalmer1/scoutr-go/models"
@@ -7,7 +7,7 @@ import (
 )
 
 // Delete : Delete an item
-func (api MongoDBAPI) Delete(req models.Request, partitionKey map[string]string) error {
+func (api MongoAPI) Delete(req models.Request, partitionKey map[string]string) error {
 	// Get the user
 	user, err := api.InitializeRequest(api, req)
 	if err != nil {

@@ -1,4 +1,4 @@
-package azure
+package mongo
 
 import (
 	"time"
@@ -9,7 +9,7 @@ import (
 )
 
 // ListAuditLogs : List audit logs
-func (api MongoDBAPI) ListAuditLogs(req models.Request, pathParams map[string]string, queryParams map[string]string) ([]models.AuditLog, error) {
+func (api MongoAPI) ListAuditLogs(req models.Request, pathParams map[string]string, queryParams map[string]string) ([]models.AuditLog, error) {
 	// Only fetch audit logs if the table is configured
 	if api.Config.AuditTable == "" {
 		return nil, &models.NotFound{
@@ -71,7 +71,7 @@ func (api MongoDBAPI) ListAuditLogs(req models.Request, pathParams map[string]st
 }
 
 // auditLog : Creates an audit log
-func (api MongoDBAPI) auditLog(action string, request models.Request, user models.User, resource *map[string]string, changes *map[string]string) error {
+func (api MongoAPI) auditLog(action string, request models.Request, user models.User, resource *map[string]string, changes *map[string]string) error {
 	// Only send audit logs if the table is configured
 	if api.Config.AuditTable == "" {
 		return nil

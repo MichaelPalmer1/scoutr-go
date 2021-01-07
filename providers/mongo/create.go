@@ -1,4 +1,4 @@
-package azure
+package mongo
 
 import (
 	"github.com/MichaelPalmer1/scoutr-go/models"
@@ -7,7 +7,7 @@ import (
 )
 
 // Create : Create an item
-func (api MongoDBAPI) Create(req models.Request, item map[string]string, validation map[string]utils.FieldValidation) error {
+func (api MongoAPI) Create(req models.Request, item map[string]string, validation map[string]utils.FieldValidation) error {
 	// Get the user
 	user, err := api.InitializeRequest(api, req)
 	if err != nil {

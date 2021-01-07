@@ -1,13 +1,29 @@
 package models
 
+import (
+	"encoding/json"
+
+	log "github.com/sirupsen/logrus"
+)
+
 type baseError struct {
 	Message string
+	Errors  map[string]string
 }
 
 // Unauthorized : User is not authenticated
 type Unauthorized baseError
 
 func (e *Unauthorized) Error() string {
+	if len(e.Errors) > 0 {
+		bs, err := json.Marshal(e.Errors)
+		if err != nil {
+			log.WithError(err).Error("Failed to marshal error data")
+		}
+
+		return string(bs)
+	}
+
 	return e.Message
 }
 
@@ -15,6 +31,15 @@ func (e *Unauthorized) Error() string {
 type Forbidden baseError
 
 func (e *Forbidden) Error() string {
+	if len(e.Errors) > 0 {
+		bs, err := json.Marshal(e.Errors)
+		if err != nil {
+			log.WithError(err).Error("Failed to marshal error data")
+		}
+
+		return string(bs)
+	}
+
 	return e.Message
 }
 
@@ -22,6 +47,15 @@ func (e *Forbidden) Error() string {
 type BadRequest baseError
 
 func (e *BadRequest) Error() string {
+	if len(e.Errors) > 0 {
+		bs, err := json.Marshal(e.Errors)
+		if err != nil {
+			log.WithError(err).Error("Failed to marshal error data")
+		}
+
+		return string(bs)
+	}
+
 	return e.Message
 }
 
@@ -29,5 +63,14 @@ func (e *BadRequest) Error() string {
 type NotFound baseError
 
 func (e *NotFound) Error() string {
+	if len(e.Errors) > 0 {
+		bs, err := json.Marshal(e.Errors)
+		if err != nil {
+			log.WithError(err).Error("Failed to marshal error data")
+		}
+
+		return string(bs)
+	}
+
 	return e.Message
 }

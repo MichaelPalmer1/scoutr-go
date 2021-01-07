@@ -9,7 +9,7 @@ import (
 )
 
 type FirestoreFiltering struct {
-	base.Filtering
+	base.BaseFiltering
 	Query firestore.Query
 }
 

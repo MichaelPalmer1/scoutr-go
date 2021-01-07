@@ -79,3 +79,22 @@ func scanAudit(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.A
 
 	return results, nil
 }
+
+func (api *DynamoAPI) storeItem(table string, item map[string]interface{}) error {
+	av, err := dynamodbattribute.MarshalMap(item)
+	if err != nil {
+		return err
+	}
+
+	input := &dynamodb.PutItemInput{
+		TableName: aws.String(table),
+		Item:      av,
+	}
+
+	_, err = api.Client.PutItem(input)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

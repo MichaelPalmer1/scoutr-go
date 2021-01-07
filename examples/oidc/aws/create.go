@@ -13,7 +13,7 @@ func create(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	requestUser := helpers.GetUserFromOIDC(req, api)
 
 	// Parse the request body
-	var body map[string]string
+	var body map[string]interface{}
 	err := json.NewDecoder(req.Body).Decode(&body)
 	if err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -31,7 +31,7 @@ func create(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	}
 
 	// Create the item
-	err = api.Create(request, body, validation)
+	err = api.Create(request, body, validation, nil)
 
 	// Check for errors in the response
 	if helpers.HTTPErrorHandler(err, w) {
