@@ -25,11 +25,12 @@ const (
 // ScoutrBase : Low level interface that defines all the functions used by a Scoutr provider. Some of these would be
 // implemented by the Scoutr struct
 type ScoutrBase interface {
-	// Implemented in Scoutr
+	ScoutrProvider
 	GetConfig() config.Config
 	CanAccessEndpoint(string, string, *models.User, *models.Request) bool
+}
 
-	// Implemented by provider
+type ScoutrProvider interface {
 	GetEntitlements([]string) ([]models.User, error)
 	GetAuth(string) (*models.User, error)
 	GetGroup(string) (*models.Group, error)
