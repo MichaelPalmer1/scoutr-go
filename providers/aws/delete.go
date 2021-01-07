@@ -2,6 +2,7 @@ package aws
 
 import (
 	"github.com/MichaelPalmer1/scoutr-go/models"
+	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -12,7 +13,7 @@ import (
 // Delete : Delete an item
 func (api DynamoAPI) Delete(req models.Request, partitionKey map[string]string) error {
 	// Get the user
-	user, err := api.InitializeRequest(api, req)
+	user, err := api.InitializeRequest(req)
 	if err != nil {
 		// Bad user - pass the error through
 		return err
@@ -34,15 +35,15 @@ func (api DynamoAPI) Delete(req models.Request, partitionKey map[string]string) 
 
 	// Build filters
 	var expr expression.Expression
-	rawConds, hasConditions, err := api.Filter(&api.Filtering, user, nil)
+	rawConds, err := api.Filtering.Filter(user, nil, base.FilterActionDelete)
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return err
 	}
 
 	// Cast to condition builder
-	var conditions expression.ConditionBuilder
-	if hasConditions {
+	var conditions interface{}
+	if rawConds != nil {
 		conditions = rawConds.(expression.ConditionBuilder)
 	}
 
@@ -57,17 +58,13 @@ func (api DynamoAPI) Delete(req models.Request, partitionKey map[string]string) 
 
 	// Append key schema conditions
 	for _, schema := range keySchema.Table.KeySchema {
-		condition := expression.Name(*schema.AttributeName).AttributeExists()
-		if !hasConditions {
-			conditions = condition
-			hasConditions = true
-		} else {
-			conditions = conditions.And(condition)
-		}
+		var condition interface{}
+		condition = expression.Name(*schema.AttributeName).AttributeExists()
+		conditions = api.Filtering.And(conditions, condition)
 	}
 
 	// Build expression
-	if hasConditions {
+	if rawConds != nil {
 		expr, err = expression.NewBuilder().WithCondition(conditions).Build()
 		if err != nil {
 			log.Errorln("Encountered error while building expression", err)

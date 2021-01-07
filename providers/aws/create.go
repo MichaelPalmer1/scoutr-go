@@ -15,7 +15,7 @@ func (api DynamoAPI) Create(req models.Request, item map[string]interface{}, val
 	var conditions interface{}
 
 	// Get the user
-	user, err := api.PrepareCreate(api, req, item, validation, requiredFields)
+	user, err := api.PrepareCreate(req, item, validation, requiredFields)
 	if err != nil {
 		// Bad user - pass the error through
 		return err

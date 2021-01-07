@@ -39,7 +39,7 @@ type ScoutrProvider interface {
 	Get(models.Request, string) (models.Record, error)
 	List(models.Request) ([]models.Record, error)
 	ListUniqueValues(models.Request, string) ([]string, error)
-	ListAuditLogs(models.Request, map[string]string, map[string]string) ([]models.AuditLog, error)
+	ListAuditLogs(models.Request, map[string]string, map[string][]string) ([]models.AuditLog, error)
 	History(models.Request, string, string, map[string]string, []string) ([]models.History, error)
 	Search(models.Request, string, []string) ([]models.Record, error)
 	Delete(models.Request, map[string]string) error
