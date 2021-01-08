@@ -13,7 +13,7 @@ import (
 // List : Lists all items in a table
 func (api DynamoAPI) List(req models.Request) ([]models.Record, error) {
 	// Get the user
-	user, err := api.InitializeRequest(api, req)
+	user, err := api.InitializeRequest(req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err
@@ -24,14 +24,13 @@ func (api DynamoAPI) List(req models.Request) ([]models.Record, error) {
 	}
 
 	// Build filters
-	rawConds, hasConditions, err := api.Filter(&api.Filtering, user, api.BuildParams(req))
+	conditions, err := api.Filtering.Filter(user, api.BuildParams(req), "")
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
-	if hasConditions {
-		conditions := rawConds.(expression.ConditionBuilder)
-		expr, err := expression.NewBuilder().WithFilter(conditions).Build()
+	if conditions != nil {
+		expr, err := expression.NewBuilder().WithFilter(conditions.(expression.ConditionBuilder)).Build()
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +60,7 @@ func (api DynamoAPI) List(req models.Request) ([]models.Record, error) {
 // ListUniqueValues : Lists unique values in a table
 func (api DynamoAPI) ListUniqueValues(req models.Request, uniqueKey string) ([]string, error) {
 	// Get the user
-	user, err := api.InitializeRequest(api, req)
+	user, err := api.InitializeRequest(req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err
@@ -72,39 +71,26 @@ func (api DynamoAPI) ListUniqueValues(req models.Request, uniqueKey string) ([]s
 	}
 
 	// Copy queryParams into params
-	params := make(map[string]string)
-	for key, value := range req.QueryParams {
-		params[key] = value
+	params := make(map[string][]string)
+	for key, values := range req.QueryParams {
+		params[key] = append(params[key], values...)
 	}
 
 	// Build filters
-	rawConds, hasConditions, err := api.Filter(&api.Filtering, user, params)
+	conditions, err := api.Filtering.Filter(user, params, "")
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
 
-	// Cast to condition builder
-	var conditions expression.ConditionBuilder
-	if hasConditions {
-		conditions = rawConds.(expression.ConditionBuilder)
-	}
-
 	// Build unique key condition
-	condition := expression.Name(uniqueKey).AttributeExists()
-
-	// Append unique key condition
-	if hasConditions {
-		conditions = conditions.And(condition)
-	} else {
-		conditions = condition
-	}
+	conditions = api.Filtering.And(conditions, expression.Name(uniqueKey).AttributeExists())
 
 	// Build projection expression
 	projection := expression.NamesList(expression.Name(uniqueKey))
 
 	// Build filter
-	expr, err := expression.NewBuilder().WithFilter(conditions).WithProjection(projection).Build()
+	expr, err := expression.NewBuilder().WithFilter(conditions.(expression.ConditionBuilder)).WithProjection(projection).Build()
 	if err != nil {
 		return nil, err
 	}

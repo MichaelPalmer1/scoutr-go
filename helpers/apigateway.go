@@ -26,7 +26,7 @@ func InitAPIGateway(event events.APIGatewayProxyRequest, config config.Config) (
 		Path:        event.Path,
 		Body:        event.Body,
 		PathParams:  event.PathParameters,
-		QueryParams: event.QueryStringParameters,
+		QueryParams: event.MultiValueQueryStringParameters,
 		UserAgent:   event.RequestContext.Identity.UserAgent,
 		SourceIP:    event.RequestContext.Identity.SourceIP,
 		User:        requestUser,
@@ -37,7 +37,7 @@ func InitAPIGateway(event events.APIGatewayProxyRequest, config config.Config) (
 		request.PathParams = make(map[string]string)
 	}
 	if len(event.QueryStringParameters) == 0 {
-		request.QueryParams = make(map[string]string)
+		request.QueryParams = make(map[string][]string)
 	}
 
 	// Create API

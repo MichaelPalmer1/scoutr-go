@@ -35,16 +35,10 @@ func (api DynamoAPI) Delete(req models.Request, partitionKey map[string]string) 
 
 	// Build filters
 	var expr expression.Expression
-	rawConds, err := api.Filtering.Filter(user, nil, base.FilterActionDelete)
+	conditions, err := api.Filtering.Filter(user, nil, base.FilterActionDelete)
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return err
-	}
-
-	// Cast to condition builder
-	var conditions interface{}
-	if rawConds != nil {
-		conditions = rawConds.(expression.ConditionBuilder)
 	}
 
 	// Get key schema
@@ -58,14 +52,12 @@ func (api DynamoAPI) Delete(req models.Request, partitionKey map[string]string) 
 
 	// Append key schema conditions
 	for _, schema := range keySchema.Table.KeySchema {
-		var condition interface{}
-		condition = expression.Name(*schema.AttributeName).AttributeExists()
-		conditions = api.Filtering.And(conditions, condition)
+		conditions = api.Filtering.And(conditions, expression.Name(*schema.AttributeName).AttributeExists())
 	}
 
 	// Build expression
-	if rawConds != nil {
-		expr, err = expression.NewBuilder().WithCondition(conditions).Build()
+	if conditions != nil {
+		expr, err = expression.NewBuilder().WithCondition(conditions.(expression.ConditionBuilder)).Build()
 		if err != nil {
 			log.Errorln("Encountered error while building expression", err)
 			return err

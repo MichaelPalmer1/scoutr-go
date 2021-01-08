@@ -12,13 +12,13 @@ type AuditUser struct {
 
 // AuditLog : Audit log object
 type AuditLog struct {
-	Time        string            `json:"time" firestore:"time"`
-	User        AuditUser         `json:"user" firestore:"user"`
-	Action      string            `json:"action" firestore:"action"`
-	Method      string            `json:"method" firestore:"method"`
-	Path        string            `json:"path" firestore:"path"`
-	ExpireTime  int64             `json:"expire_time,omitempty" firestore:"expire_time,omitempty"`
-	QueryParams map[string]string `json:"query_params,omitempty" firestore:"query_params,omitempty"`
-	Resource    map[string]string `json:"resource,omitempty" firestore:"resource,omitempty"`
-	Body        interface{}       `json:"body,omitempty" firestore:"body,omitempty"`
+	Time        string              `json:"time" firestore:"time"`
+	User        AuditUser           `json:"user" firestore:"user"`
+	Action      string              `json:"action" firestore:"action"`
+	Method      string              `json:"method" firestore:"method"`
+	Path        string              `json:"path" firestore:"path"`
+	ExpireTime  int64               `json:"expire_time,omitempty" firestore:"expire_time,omitempty"`
+	QueryParams map[string][]string `json:"query_params,omitempty" firestore:"query_params,omitempty"`
+	Resource    map[string]string   `json:"resource,omitempty" firestore:"resource,omitempty"`
+	Body        interface{}         `json:"body,omitempty" firestore:"body,omitempty"`
 }

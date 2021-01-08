@@ -2,7 +2,7 @@ package aws
 
 import (
 	"github.com/MichaelPalmer1/scoutr-go/models"
-	"github.com/MichaelPalmer1/scoutr-go/utils"
+	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -11,11 +11,11 @@ import (
 )
 
 // Update : Update an item
-func (api DynamoAPI) Update(req models.Request, partitionKey map[string]string, item map[string]string, validation map[string]utils.FieldValidation, auditAction string) (interface{}, error) {
+func (api DynamoAPI) Update(req models.Request, partitionKey map[string]string, item map[string]interface{}, validation map[string]models.FieldValidation, requiredFields []string, auditAction string) (interface{}, error) {
 	var output interface{}
 
 	// Get the user
-	user, err := api.InitializeRequest(api, req)
+	user, err := api.InitializeRequest(req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err
@@ -24,7 +24,7 @@ func (api DynamoAPI) Update(req models.Request, partitionKey map[string]string, 
 	// Run data validation
 	if validation != nil {
 		log.Infoln("Running field validation")
-		err := utils.ValidateFields(validation, item, nil, true)
+		err := api.ValidateFields(validation, requiredFields, item, nil)
 		if err != nil {
 			log.Errorln("Field validation error", err)
 			return nil, err
@@ -59,16 +59,10 @@ func (api DynamoAPI) Update(req models.Request, partitionKey map[string]string, 
 
 	// Build filters
 	var expr expression.Expression
-	rawConds, hasConditions, err := api.Filter(&api.Filtering, user, nil)
+	conditions, err := api.Filtering.Filter(user, nil, base.FilterActionUpdate)
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
-	}
-
-	// Cast to condition builder
-	var conditions expression.ConditionBuilder
-	if hasConditions {
-		conditions = rawConds.(expression.ConditionBuilder)
 	}
 
 	// Get key schema
@@ -83,17 +77,12 @@ func (api DynamoAPI) Update(req models.Request, partitionKey map[string]string, 
 	// Append key schema conditions
 	for _, schema := range keySchema.Table.KeySchema {
 		condition := expression.Name(*schema.AttributeName).AttributeExists()
-		if !hasConditions {
-			conditions = condition
-			hasConditions = true
-		} else {
-			conditions = conditions.And(condition)
-		}
+		conditions = api.Filtering.And(conditions, condition)
 	}
 
 	// Build expression
-	if hasConditions {
-		expr, err = expression.NewBuilder().WithCondition(conditions).WithUpdate(updateConds).Build()
+	if conditions != nil {
+		expr, err = expression.NewBuilder().WithCondition(conditions.(expression.ConditionBuilder)).WithUpdate(updateConds).Build()
 		if err != nil {
 			log.Errorln("Encountered error while building expression", err)
 			return nil, err

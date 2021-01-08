@@ -9,7 +9,6 @@ import (
 
 	"github.com/MichaelPalmer1/scoutr-go/config"
 	"github.com/MichaelPalmer1/scoutr-go/models"
-	"github.com/MichaelPalmer1/scoutr-go/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -35,12 +34,12 @@ type ScoutrProvider interface {
 	GetAuth(string) (*models.User, error)
 	GetGroup(string) (*models.Group, error)
 	Create(models.Request, map[string]interface{}, map[string]models.FieldValidation, []string) error
-	Update(models.Request, map[string]string, map[string]string, map[string]utils.FieldValidation, string) (interface{}, error)
+	Update(models.Request, map[string]string, map[string]interface{}, map[string]models.FieldValidation, []string, string) (interface{}, error)
 	Get(models.Request, string) (models.Record, error)
 	List(models.Request) ([]models.Record, error)
 	ListUniqueValues(models.Request, string) ([]string, error)
 	ListAuditLogs(models.Request, map[string]string, map[string][]string) ([]models.AuditLog, error)
-	History(models.Request, string, string, map[string]string, []string) ([]models.History, error)
+	History(models.Request, string, string, map[string][]string, []string) ([]models.History, error)
 	Search(models.Request, string, []string) ([]models.Record, error)
 	Delete(models.Request, map[string]string) error
 }
@@ -144,10 +143,18 @@ func (api *Scoutr) ValidateRequest(req models.Request, user *models.User) error 
 	}
 
 	// Make sure query params have keys and values
-	for key, value := range req.QueryParams {
-		if key == "" || value == "" {
+	for key, values := range req.QueryParams {
+		if key == "" {
 			return &models.BadRequest{
 				Message: "Query strings must have keys and values",
+			}
+		}
+
+		for _, value := range values {
+			if value == "" {
+				return &models.BadRequest{
+					Message: "Query strings must have keys and values",
+				}
 			}
 		}
 	}
@@ -264,17 +271,17 @@ func (api *Scoutr) MergePermissions(user *models.User, group *models.Group) {
 
 // BuildParams : Takes in a request object and generates a parameters map
 // that can be used in Filter calls
-func (api *Scoutr) BuildParams(req models.Request) map[string]string {
-	params := make(map[string]string)
+func (api *Scoutr) BuildParams(req models.Request) map[string][]string {
+	params := make(map[string][]string)
 
 	// Copy query params into params
-	for key, value := range req.QueryParams {
-		params[key] = value
+	for key, values := range req.QueryParams {
+		params[key] = append(params[key], values...)
 	}
 
 	// Merge path params into params
 	for key, value := range req.PathParams {
-		params[key] = value
+		params[key] = append(params[key], value)
 	}
 
 	// Generate dynamic search
@@ -282,7 +289,7 @@ func (api *Scoutr) BuildParams(req models.Request) map[string]string {
 	searchValue, hasSearchValue := req.PathParams["search_value"]
 	if hasSearchKey && hasSearchValue {
 		// Map the search key and value into path params
-		params[searchKey] = searchValue
+		params[searchKey] = []string{searchValue}
 		delete(params, "search_key")
 		delete(params, "search_value")
 	}

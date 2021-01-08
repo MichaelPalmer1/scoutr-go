@@ -80,7 +80,7 @@ func (api DynamoAPI) ListAuditLogs(req models.Request, pathParams map[string]str
 }
 
 // auditLog : Creates an audit log
-func (api DynamoAPI) auditLog(action string, request models.Request, user models.User, resource *map[string]string, changes *map[string]string) {
+func (api DynamoAPI) auditLog(action string, request models.Request, user models.User, resource *map[string]string, changes *map[string]interface{}) {
 	// Only send audit logs if the table is configured
 	if api.Config.AuditTable == "" {
 		return

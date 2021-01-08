@@ -26,5 +26,5 @@ type Request struct {
 	SourceIP    string
 	UserAgent   string
 	PathParams  map[string]string
-	QueryParams map[string]string
+	QueryParams map[string][]string
 }

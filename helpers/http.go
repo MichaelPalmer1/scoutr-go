@@ -39,11 +39,11 @@ func HTTPErrorHandler(err error, w http.ResponseWriter) bool {
 
 func BuildHttpRequest(api base.ScoutrBase, r *http.Request, params httprouter.Params) models.Request {
 	pathParams := make(map[string]string)
-	queryParams := make(map[string]string)
+	queryParams := make(map[string][]string)
 
 	// Parse query params
 	for key, values := range r.URL.Query() {
-		queryParams[key] = values[0]
+		queryParams[key] = values
 	}
 
 	// Parse path params

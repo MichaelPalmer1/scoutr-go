@@ -9,7 +9,7 @@ import (
 )
 
 // History : Generate record history
-func (api DynamoAPI) History(req models.Request, key string, value string, queryParams map[string]string, actions []string) ([]models.History, error) {
+func (api DynamoAPI) History(req models.Request, key string, value string, queryParams map[string][]string, actions []string) ([]models.History, error) {
 	var history []models.History
 
 	// Only fetch audit logs if the table is configured
@@ -20,7 +20,7 @@ func (api DynamoAPI) History(req models.Request, key string, value string, query
 	}
 
 	// Get the user
-	_, err := api.InitializeRequest(api, req)
+	_, err := api.InitializeRequest(req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err

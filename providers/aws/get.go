@@ -13,7 +13,7 @@ func (api DynamoAPI) Get(req models.Request, id string) (models.Record, error) {
 	var partitionKey string
 
 	// Get the user
-	user, err := api.InitializeRequest(api, req)
+	user, err := api.InitializeRequest(req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err
@@ -37,28 +37,18 @@ func (api DynamoAPI) Get(req models.Request, id string) (models.Record, error) {
 	}
 
 	// Build filters
-	rawConds, hasConditions, err := api.Filter(&api.Filtering, user, map[string]string{})
+	conditions, err := api.Filtering.Filter(user, nil, "")
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
 
-	// Cast to condition builder
-	var conditions expression.ConditionBuilder
-	if hasConditions {
-		conditions = rawConds.(expression.ConditionBuilder)
-	}
-
 	// Build key condition
 	keyCondition := expression.Name(partitionKey).Equal(expression.Value(id))
-	if hasConditions {
-		conditions = conditions.And(keyCondition)
-	} else {
-		conditions = keyCondition
-	}
+	conditions = api.Filtering.And(conditions, keyCondition)
 
 	// Build expression
-	expr, err := expression.NewBuilder().WithFilter(conditions).Build()
+	expr, err := expression.NewBuilder().WithFilter(conditions.(expression.ConditionBuilder)).Build()
 	if err != nil {
 		return nil, err
 	}
