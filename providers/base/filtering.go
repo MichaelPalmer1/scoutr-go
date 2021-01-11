@@ -34,18 +34,10 @@ const (
 // OperationMap : Map of magic operator to a callable to perform the filter
 type OperationMap map[string]func(string, interface{}) interface{}
 
-// BaseFiltering : Interface used to generalize the filter logic across multiple providers
-type BaseFiltering interface {
-	// Implementation required by inheriting structs
-	Operations() OperationMap
+type ScoutrFilters interface {
 	And(interface{}, interface{}) interface{}
 	Or(interface{}, interface{}) interface{}
 	Equals(string, interface{}) interface{}
-
-	Filter(*models.User, map[string][]string, string) (interface{}, error)
-	userFilters([]models.FilterField) (interface{}, error)
-
-	// Optional
 	NotEqual(string, interface{}) interface{}
 	StartsWith(string, interface{}) interface{}
 	Contains(string, interface{}) interface{}
@@ -60,8 +52,17 @@ type BaseFiltering interface {
 	NotIn(string, interface{}) interface{}
 }
 
+// BaseFiltering : Interface used to generalize the filter logic across multiple providers
+type BaseFiltering interface {
+	ScoutrFilters
+	Operations() OperationMap
+	Filter(*models.User, map[string][]string, string) (interface{}, error)
+	userFilters([]models.FilterField) (interface{}, error)
+}
+
 type Filtering struct {
 	BaseFiltering
+	Provider string
 }
 
 func (f *Filtering) Filter(user *models.User, filters map[string][]string, action string) (interface{}, error) {
@@ -168,7 +169,7 @@ func (f *Filtering) performFilter(conditions interface{}, key string, value inte
 	// TODO: Convert to decimal if this is a numeric operation
 
 	// Perform the filter operation
-	fn, ok := f.Operations()[operator]
+	fn, ok := f.BaseFiltering.Operations()[operator]
 	if !ok {
 		return nil, &models.BadRequest{
 			Message: fmt.Sprintf("Provider does not support magic operator '%s'", operator),

@@ -20,6 +20,10 @@ type DynamoAPI struct {
 func (api *DynamoAPI) Init(config *aws.Config) {
 	sess := session.Must(session.NewSession(config))
 	api.Client = dynamodb.New(sess)
+	api.Filtering = DynamoFiltering{
+		Filtering: &base.Filtering{},
+	}
+	api.ScoutrBase = api
 }
 
 func scan(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.Record, error) {

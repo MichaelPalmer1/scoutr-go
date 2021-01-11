@@ -3,6 +3,7 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -20,18 +21,39 @@ type userAccess struct {
 // HTTPErrorHandler : Handle HTTP errors
 func HTTPErrorHandler(err error, w http.ResponseWriter) bool {
 	if err != nil {
+		// Marshal the error
+		var errorString string
+		bs, err := json.Marshal(err)
+		if err != nil {
+			log.WithError(err).Error("Failed to marshal output")
+			errorString = err.Error()
+		} else {
+			errorString = string(bs)
+		}
+
+		// Select the error code
+		var errorCode int
 		switch err.(type) {
 		case *models.Unauthorized:
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			errorCode = http.StatusUnauthorized
 		case *models.Forbidden:
-			http.Error(w, err.Error(), http.StatusForbidden)
+			errorCode = http.StatusForbidden
 		case *models.BadRequest:
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			errorCode = http.StatusBadRequest
 		case *models.NotFound:
-			http.Error(w, err.Error(), http.StatusNotFound)
+			errorCode = http.StatusNotFound
 		default:
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			errorCode = http.StatusInternalServerError
 		}
+
+		// Trigger the error
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.WriteHeader(errorCode)
+		if _, err := fmt.Fprintln(w, errorString); err != nil {
+			log.WithError(err).Error("Failed to write error content")
+		}
+
 		return true
 	}
 	return false
@@ -101,7 +123,7 @@ func InitHTTPServer(api base.ScoutrBase, primaryListEndpoint string) (*httproute
 
 		// Marshal the response and write it to output
 		out, _ := json.Marshal(data)
-		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(out)
 		if err != nil {
 			log.Errorf("Error writing output: %v", err)
@@ -127,7 +149,7 @@ func InitHTTPServer(api base.ScoutrBase, primaryListEndpoint string) (*httproute
 
 		// Marshal the response and write it to output
 		out, _ := json.Marshal(data)
-		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(out)
 		if err != nil {
 			log.Errorf("Error writing output: %v", err)
@@ -206,7 +228,7 @@ func InitHTTPServer(api base.ScoutrBase, primaryListEndpoint string) (*httproute
 
 		// Marshal the response and write it to output
 		out, _ := json.Marshal(data)
-		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(out)
 		if err != nil {
 			log.Errorf("Error writing output: %v", err)
@@ -227,7 +249,7 @@ func InitHTTPServer(api base.ScoutrBase, primaryListEndpoint string) (*httproute
 
 		// Marshal the response and write it to output
 		out, _ := json.Marshal(data)
-		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(out)
 		if err != nil {
 			log.Errorf("Error writing output: %v", err)

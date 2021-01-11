@@ -3,8 +3,6 @@ package main
 import (
 	"flag"
 	"net/http"
-	"os/user"
-	"path/filepath"
 	"strings"
 
 	"github.com/MichaelPalmer1/scoutr-go/config"
@@ -21,6 +19,7 @@ func init() {
 		Scoutr: &base.Scoutr{
 			Config: config.Config{},
 		},
+		//Filtering: dynamo.DynamoFiltering{},
 	}
 }
 
@@ -51,8 +50,14 @@ func main() {
 		log.Fatalln("group-table argument is required")
 	}
 
-	usr, _ := user.Current()
-	creds := credentials.NewSharedCredentials(filepath.Join(usr.HomeDir, ".aws/credentials"), "default")
+	creds := credentials.NewChainCredentials([]credentials.Provider{
+		&credentials.EnvProvider{},
+		//&ec2rolecreds.EC2RoleProvider{
+		//	Client: ec2metadata.New(session.Must(session.NewSession())),
+		//},
+		&credentials.SharedCredentialsProvider{},
+	})
+
 	api.Init(&aws.Config{
 		Region:      aws.String("us-east-1"),
 		Credentials: creds,

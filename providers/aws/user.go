@@ -75,7 +75,8 @@ func (api DynamoAPI) GetEntitlements(entitlementIDs []string) ([]models.User, er
 	if conditions == nil {
 		return nil, nil
 	}
-	conds := conditions.(expression.ConditionBuilder)
+
+	conds := *conditions.(*expression.ConditionBuilder)
 
 	expr, err := expression.NewBuilder().WithFilter(conds).Build()
 	if err != nil {

@@ -10,7 +10,7 @@ import (
 )
 
 type DynamoFiltering struct {
-	base.BaseFiltering
+	*base.Filtering
 }
 
 // Operations : Map of supported operations for this filter provider

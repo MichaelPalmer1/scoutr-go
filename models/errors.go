@@ -7,16 +7,16 @@ import (
 )
 
 type baseError struct {
-	Message string
-	Errors  map[string]string
+	Message  string            `json:"error,omitempty"`
+	Messages map[string]string `json:"errors,omitempty"`
 }
 
 // Unauthorized : User is not authenticated
 type Unauthorized baseError
 
 func (e *Unauthorized) Error() string {
-	if len(e.Errors) > 0 {
-		bs, err := json.Marshal(e.Errors)
+	if len(e.Messages) > 0 {
+		bs, err := json.Marshal(e.Messages)
 		if err != nil {
 			log.WithError(err).Error("Failed to marshal error data")
 		}
@@ -31,8 +31,8 @@ func (e *Unauthorized) Error() string {
 type Forbidden baseError
 
 func (e *Forbidden) Error() string {
-	if len(e.Errors) > 0 {
-		bs, err := json.Marshal(e.Errors)
+	if len(e.Messages) > 0 {
+		bs, err := json.Marshal(e.Messages)
 		if err != nil {
 			log.WithError(err).Error("Failed to marshal error data")
 		}
@@ -47,8 +47,8 @@ func (e *Forbidden) Error() string {
 type BadRequest baseError
 
 func (e *BadRequest) Error() string {
-	if len(e.Errors) > 0 {
-		bs, err := json.Marshal(e.Errors)
+	if len(e.Messages) > 0 {
+		bs, err := json.Marshal(e.Messages)
 		if err != nil {
 			log.WithError(err).Error("Failed to marshal error data")
 		}
@@ -63,8 +63,8 @@ func (e *BadRequest) Error() string {
 type NotFound baseError
 
 func (e *NotFound) Error() string {
-	if len(e.Errors) > 0 {
-		bs, err := json.Marshal(e.Errors)
+	if len(e.Messages) > 0 {
+		bs, err := json.Marshal(e.Messages)
 		if err != nil {
 			log.WithError(err).Error("Failed to marshal error data")
 		}

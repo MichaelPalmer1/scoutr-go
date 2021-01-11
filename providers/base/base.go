@@ -231,7 +231,7 @@ func (api *Scoutr) ValidateFields(validation map[string]models.FieldValidation, 
 			// Return when all validations have been processed
 			if len(errors) > 0 {
 				return &models.BadRequest{
-					Errors: errors,
+					Messages: errors,
 				}
 			}
 
@@ -370,6 +370,13 @@ func (api Scoutr) PrepareCreate(request models.Request, data map[string]interfac
 func (api Scoutr) GetUser(id string, userData *models.UserData) (*models.User, error) {
 	isUser := true
 	user := models.User{ID: id}
+
+	// If the user id is not specified, deny the access
+	if id == "" {
+		return nil, &models.Unauthorized{
+			Message: "Unknown user",
+		}
+	}
 
 	// Try to find user in the auth table
 	if auth, err := api.ScoutrBase.GetAuth(id); err != nil {
