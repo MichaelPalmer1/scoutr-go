@@ -48,7 +48,7 @@ type ScoutrProvider interface {
 // various cloud providers
 type Scoutr struct {
 	ScoutrBase
-	Filtering BaseFiltering
+	Filtering FilterBase
 	Config    config.Config
 }
 

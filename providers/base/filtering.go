@@ -3,7 +3,6 @@ package base
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"regexp"
 
 	"github.com/MichaelPalmer1/scoutr-go/models"
@@ -52,17 +51,16 @@ type ScoutrFilters interface {
 	NotIn(string, interface{}) interface{}
 }
 
-// BaseFiltering : Interface used to generalize the filter logic across multiple providers
-type BaseFiltering interface {
-	ScoutrFilters
+// FilterBase : Interface used to generalize the filter logic across multiple providers
+type FilterBase interface {
 	Operations() OperationMap
 	Filter(*models.User, map[string][]string, string) (interface{}, error)
 	userFilters([]models.FilterField) (interface{}, error)
 }
 
 type Filtering struct {
-	BaseFiltering
-	Provider string
+	FilterBase
+	ScoutrFilters
 }
 
 func (f *Filtering) Filter(user *models.User, filters map[string][]string, action string) (interface{}, error) {
@@ -88,7 +86,7 @@ func (f *Filtering) Filter(user *models.User, filters map[string][]string, actio
 		}
 
 		// Perform user filter
-		conditions, err = f.userFilters(filterFields)
+		conditions, err = f.FilterBase.userFilters(filterFields)
 		if err != nil {
 			return nil, err
 		}
@@ -138,9 +136,9 @@ func (f *Filtering) userFilters(filterFields []models.FilterField) (interface{},
 				if err != nil {
 					return nil, err
 				}
-				filterConds = f.Or(filterConds, result)
+				filterConds = f.ScoutrFilters.Or(filterConds, result)
 			}
-			conditions = f.And(conditions, filterConds)
+			conditions = f.ScoutrFilters.And(conditions, filterConds)
 		}
 	}
 
@@ -169,7 +167,7 @@ func (f *Filtering) performFilter(conditions interface{}, key string, value inte
 	// TODO: Convert to decimal if this is a numeric operation
 
 	// Perform the filter operation
-	fn, ok := f.BaseFiltering.Operations()[operator]
+	fn, ok := f.FilterBase.Operations()[operator]
 	if !ok {
 		return nil, &models.BadRequest{
 			Message: fmt.Sprintf("Provider does not support magic operator '%s'", operator),
@@ -179,126 +177,126 @@ func (f *Filtering) performFilter(conditions interface{}, key string, value inte
 	// Run the condition function
 	condition := fn(key, value)
 
-	// If the condition is nil, do not apply the condition
+	// Apply the condition if it has a non-nil value
 	if condition != nil {
-		return f.And(conditions, condition), nil
+		return f.ScoutrFilters.And(conditions, condition), nil
 	}
 
 	return conditions, nil
 }
 
 // Filter : Build a filter
-func (api *Scoutr) OldFilter(f BaseFiltering, user *models.User, filters map[string]string) (interface{}, bool, error) {
-	var conditions interface{}
-	initialized := false
-	re := regexp.MustCompile(`^(.+)__(.+)$`)
-
-	// Build user filters
-	if user != nil {
-		for idx, item := range user.ReadFilters {
-			if value, ok := item.Value.(string); ok {
-				// Value is a single string
-				condition := f.Equals(item.Field, value)
-				initialized = true
-				if idx == 0 {
-					conditions = condition
-				} else {
-					conditions = f.And(conditions, condition)
-				}
-			} else if value, ok := item.Value.([]interface{}); ok {
-				// Value is a list of strings
-				// Check that the IN operation is supported
-				if _, ok := f.Operations()["in"]; !ok {
-					return nil, false, &models.BadRequest{
-						Message: "Failed to generate user condition - IN operation is not supported by this provider.",
-					}
-				}
-
-				// Values are expected to be in JSON-encoded string
-				vals, err := json.Marshal(value)
-				if err != nil {
-					log.Errorln("Failed to marshal user filter data")
-					return nil, false, err
-				}
-
-				// Build condition
-				condition := f.In(item.Field, string(vals))
-				initialized = true
-				if idx == 0 {
-					conditions = condition
-				} else {
-					conditions = f.And(conditions, condition)
-				}
-			} else {
-				log.Warnln("Received value of unknown type", item.Value)
-				log.Warnln("Type", reflect.TypeOf(item.Value))
-				continue
-			}
-		}
-	}
-
-	// Build specified filters
-	for key, value := range filters {
-		var condition interface{}
-
-		// Check for magic operator matches
-		matches := re.FindAllStringSubmatch(key, -1)
-		if len(matches) > 0 && len(matches[0]) == 3 {
-			key = matches[0][1]
-			operation := matches[0][2]
-
-			// Find corresponding *supported* operation for this filter class
-			supported := false
-			for op, function := range f.Operations() {
-				if operation == op {
-					supported = true
-
-					// Run the condition function
-					result := function(key, value)
-
-					// If result is nil, do not apply the condition
-					if result != nil {
-						condition = result
-					}
-
-					break
-				}
-			}
-
-			// If filter is not found (unsupported), throw an error
-			if !supported {
-				return conditions, false, &models.BadRequest{
-					Message: fmt.Sprintf("Unsupported magic operator '%s'", operation),
-				}
-			}
-		} else {
-			// No magic operator matches - using equals operation
-			condition = f.Equals(key, value)
-		}
-
-		if !initialized {
-			// Initialize conditions
-			conditions = condition
-			initialized = true
-		} else {
-			// Merge conditions together using AND
-			conditions = f.And(conditions, condition)
-		}
-	}
-
-	return conditions, initialized, nil
-}
+//func (api *Scoutr) OldFilter(f FilterBase, user *models.User, filters map[string]string) (interface{}, bool, error) {
+//	var conditions interface{}
+//	initialized := false
+//	re := regexp.MustCompile(`^(.+)__(.+)$`)
+//
+//	// Build user filters
+//	if user != nil {
+//		for idx, item := range user.ReadFilters {
+//			if value, ok := item.Value.(string); ok {
+//				// Value is a single string
+//				condition := f.Equals(item.Field, value)
+//				initialized = true
+//				if idx == 0 {
+//					conditions = condition
+//				} else {
+//					conditions = f.And(conditions, condition)
+//				}
+//			} else if value, ok := item.Value.([]interface{}); ok {
+//				// Value is a list of strings
+//				// Check that the IN operation is supported
+//				if _, ok := f.Operations()["in"]; !ok {
+//					return nil, false, &models.BadRequest{
+//						Message: "Failed to generate user condition - IN operation is not supported by this provider.",
+//					}
+//				}
+//
+//				// Values are expected to be in JSON-encoded string
+//				vals, err := json.Marshal(value)
+//				if err != nil {
+//					log.Errorln("Failed to marshal user filter data")
+//					return nil, false, err
+//				}
+//
+//				// Build condition
+//				condition := f.In(item.Field, string(vals))
+//				initialized = true
+//				if idx == 0 {
+//					conditions = condition
+//				} else {
+//					conditions = f.And(conditions, condition)
+//				}
+//			} else {
+//				log.Warnln("Received value of unknown type", item.Value)
+//				log.Warnln("Type", reflect.TypeOf(item.Value))
+//				continue
+//			}
+//		}
+//	}
+//
+//	// Build specified filters
+//	for key, value := range filters {
+//		var condition interface{}
+//
+//		// Check for magic operator matches
+//		matches := re.FindAllStringSubmatch(key, -1)
+//		if len(matches) > 0 && len(matches[0]) == 3 {
+//			key = matches[0][1]
+//			operation := matches[0][2]
+//
+//			// Find corresponding *supported* operation for this filter class
+//			supported := false
+//			for op, function := range f.Operations() {
+//				if operation == op {
+//					supported = true
+//
+//					// Run the condition function
+//					result := function(key, value)
+//
+//					// If result is nil, do not apply the condition
+//					if result != nil {
+//						condition = result
+//					}
+//
+//					break
+//				}
+//			}
+//
+//			// If filter is not found (unsupported), throw an error
+//			if !supported {
+//				return conditions, false, &models.BadRequest{
+//					Message: fmt.Sprintf("Unsupported magic operator '%s'", operation),
+//				}
+//			}
+//		} else {
+//			// No magic operator matches - using equals operation
+//			condition = f.Equals(key, value)
+//		}
+//
+//		if !initialized {
+//			// Initialize conditions
+//			conditions = condition
+//			initialized = true
+//		} else {
+//			// Merge conditions together using AND
+//			conditions = f.And(conditions, condition)
+//		}
+//	}
+//
+//	return conditions, initialized, nil
+//}
 
 // MultiFilter : Build multi-filter using the IN operator to search a key for 1 or more values
-func (api *Scoutr) MultiFilter(f BaseFiltering, user *models.User, key string, values []string) (interface{}, error) {
+func (f *Filtering) MultiFilter(user *models.User, key string, values []string) (interface{}, error) {
 	// Build the default user filters
-	conditions, err := api.Filtering.Filter(user, nil, "")
+	conditions, err := f.Filter(user, nil, "")
 	if err != nil {
 		return nil, err
 	}
 
 	// Ensure the IN operation is supported by this provider
-	if _, ok := f.Operations()["in"]; !ok {
+	if _, ok := f.FilterBase.Operations()[OperationIn]; !ok {
 		return nil, &models.BadRequest{
 			Message: "Provider does not support the IN operator",
 		}
@@ -312,7 +310,7 @@ func (api *Scoutr) MultiFilter(f BaseFiltering, user *models.User, key string, v
 	}
 
 	// Build the IN condition
-	conditions = f.And(conditions, f.In(key, string(vals)))
+	conditions = f.ScoutrFilters.And(conditions, f.ScoutrFilters.In(key, string(vals)))
 
 	return conditions, nil
 }

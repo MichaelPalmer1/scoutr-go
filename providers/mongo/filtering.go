@@ -12,7 +12,7 @@ import (
 
 // MongoDBFiltering : Used by the MongoAPI to perform filters against a MongoDB backend
 type MongoDBFiltering struct {
-	base.BaseFiltering
+	base.FilterBase
 }
 
 // Operations : Map of supported operations for this filter provider

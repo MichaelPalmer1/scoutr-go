@@ -22,7 +22,7 @@ func (api DynamoAPI) Search(req models.Request, key string, values []string) ([]
 	}
 
 	// Build filters
-	conditions, err := api.MultiFilter(&api.Filtering, user, key, values)
+	conditions, err := api.Filtering.MultiFilter(user, key, values)
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
