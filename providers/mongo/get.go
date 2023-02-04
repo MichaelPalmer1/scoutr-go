@@ -1,4 +1,4 @@
-package azure
+package mongo
 
 import (
 	"github.com/MichaelPalmer1/scoutr-go/models"
@@ -7,7 +7,7 @@ import (
 )
 
 // Get : Get an item from the table
-func (api MongoDBAPI) Get(req models.Request, id string) (models.Record, error) {
+func (api MongoAPI) Get(req models.Request, id string) (models.Record, error) {
 	var record models.Record
 	collection := api.Client.C(api.Config.DataTable)
 

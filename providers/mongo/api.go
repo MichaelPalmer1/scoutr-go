@@ -1,4 +1,4 @@
-package azure
+package mongo
 
 import (
 	"crypto/tls"
@@ -12,15 +12,15 @@ import (
 	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 )
 
-// MongoDBAPI : Implementation of Scoutr that interacts with MongoDB backends
-type MongoDBAPI struct {
+// MongoAPI : Implementation of Scoutr that interacts with MongoDB backends
+type MongoAPI struct {
 	*base.Scoutr
 	Filtering MongoDBFiltering
 	Client    *mgo.Database
 }
 
 // Init : Initialize connection to MongoDB
-func (api *MongoDBAPI) Init(address, database, username, password string) {
+func (api *MongoAPI) Init(address, database, username, password string) {
 	dialInfo := &mgo.DialInfo{
 		Addrs:    []string{address},
 		Timeout:  60 * time.Second,
@@ -41,6 +41,6 @@ func (api *MongoDBAPI) Init(address, database, username, password string) {
 }
 
 // Close : Close connection with MongoDB
-func (api *MongoDBAPI) Close() {
+func (api *MongoAPI) Close() {
 	api.Client.Session.Close()
 }

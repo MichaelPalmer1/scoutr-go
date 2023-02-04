@@ -11,13 +11,13 @@ import (
 
 func listTypes(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	pathParams := make(map[string]string)
-	queryParams := make(map[string]string)
+	queryParams := make(map[string][]string)
 
 	requestUser := helpers.GetUserFromOIDC(req, api)
 
 	// Parse query params
 	for key, values := range req.URL.Query() {
-		queryParams[key] = values[0]
+		queryParams[key] = values
 	}
 
 	// Parse path params

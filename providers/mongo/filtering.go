@@ -1,4 +1,4 @@
-package azure
+package mongo
 
 import (
 	"encoding/json"
@@ -10,9 +10,9 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-// MongoDBFiltering : Used by the MongoDBAPI to perform filters against a MongoDB backend
+// MongoDBFiltering : Used by the MongoAPI to perform filters against a MongoDB backend
 type MongoDBFiltering struct {
-	base.Filtering
+	base.FilterBase
 }
 
 // Operations : Map of supported operations for this filter provider

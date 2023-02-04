@@ -11,7 +11,7 @@ import (
 // Search : Search items in the table
 func (api DynamoAPI) Search(req models.Request, key string, values []string) ([]models.Record, error) {
 	// Get the user
-	user, err := api.InitializeRequest(api, req)
+	user, err := api.InitializeRequest(req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err
@@ -22,13 +22,12 @@ func (api DynamoAPI) Search(req models.Request, key string, values []string) ([]
 	}
 
 	// Build filters
-	rawConds, err := api.MultiFilter(&api.Filtering, user, key, values)
+	conditions, err := api.Filtering.MultiFilter(user, key, values)
 	if err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
 	}
-	conditions := rawConds.(expression.ConditionBuilder)
-	expr, err := expression.NewBuilder().WithFilter(conditions).Build()
+	expr, err := expression.NewBuilder().WithFilter(conditions.(expression.ConditionBuilder)).Build()
 	if err != nil {
 		log.Errorln("Failed to build expression", err)
 	}

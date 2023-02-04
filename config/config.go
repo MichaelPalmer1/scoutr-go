@@ -9,7 +9,14 @@ type Config struct {
 	PrimaryKey         string
 	LogRetentionDays   int
 	OIDCUsernameHeader string
-	OIDCNameHeader     string
+	OIDCNameHeader     []string
 	OIDCEmailHeader    string
 	OIDCGroupHeader    string
+}
+
+// MongoConfig: Mongo-specific configuration
+type MongoConfig struct {
+	Config
+	ConnectionString string
+	Database         string
 }

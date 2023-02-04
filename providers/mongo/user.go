@@ -1,4 +1,4 @@
-package azure
+package mongo
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ import (
 //  - nil, nil: user does not exist
 //  - nil, error: error while fetching user
 //  - user, nil: found user
-func (api MongoDBAPI) GetAuth(id string) (*models.User, error) {
+func (api MongoAPI) GetAuth(id string) (*models.User, error) {
 	collection := api.Client.C(api.Config.AuthTable)
 	var user *models.User
 
@@ -49,7 +49,7 @@ func (api MongoDBAPI) GetAuth(id string) (*models.User, error) {
 //  - nil, nil: group does not exist
 //  - nil, error: error while fetching group
 //  - user, nil: found group
-func (api MongoDBAPI) GetGroup(id string) (*models.Group, error) {
+func (api MongoAPI) GetGroup(id string) (*models.Group, error) {
 	collection := api.Client.C(api.Config.GroupTable)
 	var group *models.Group
 

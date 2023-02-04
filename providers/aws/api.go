@@ -20,6 +20,13 @@ type DynamoAPI struct {
 func (api *DynamoAPI) Init(config *aws.Config) {
 	sess := session.Must(session.NewSession(config))
 	api.Client = dynamodb.New(sess)
+	f := DynamoFiltering{}
+	f.Filtering = &base.Filtering{
+		FilterBase:    &f,
+		ScoutrFilters: &f,
+	}
+	api.Filtering = f
+	api.ScoutrBase = api
 }
 
 func scan(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.Record, error) {
@@ -78,4 +85,23 @@ func scanAudit(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.A
 	}
 
 	return results, nil
+}
+
+func (api *DynamoAPI) storeItem(table string, item map[string]interface{}) error {
+	av, err := dynamodbattribute.MarshalMap(item)
+	if err != nil {
+		return err
+	}
+
+	input := &dynamodb.PutItemInput{
+		TableName: aws.String(table),
+		Item:      av,
+	}
+
+	_, err = api.Client.PutItem(input)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

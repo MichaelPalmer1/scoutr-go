@@ -1,4 +1,4 @@
-package azure
+package mongo
 
 import (
 	"github.com/MichaelPalmer1/scoutr-go/models"
@@ -7,7 +7,7 @@ import (
 )
 
 // Search : Search items in the table
-func (api MongoDBAPI) Search(req models.Request, key string, values []string) ([]models.Record, error) {
+func (api MongoAPI) Search(req models.Request, key string, values []string) ([]models.Record, error) {
 	records := []models.Record{}
 	collection := api.Client.C(api.Config.DataTable)
 

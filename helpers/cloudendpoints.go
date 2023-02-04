@@ -16,9 +16,9 @@ func InitCloudEndpoint(r *http.Request) models.Request {
 	}
 
 	// Parse query params
-	queryParams := make(map[string]string)
+	queryParams := make(map[string][]string)
 	for key, values := range r.URL.Query() {
-		queryParams[key] = values[0]
+		queryParams[key] = values
 	}
 
 	// Create the request

@@ -3,12 +3,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/MichaelPalmer1/scoutr-go/providers/azure"
-
 	"github.com/MichaelPalmer1/scoutr-go/utils"
 )
 
-var api azure.MongoDBAPI
+var api mongo.MongoDBAPI
 var validation map[string]utils.FieldValidation
 
 func init() {

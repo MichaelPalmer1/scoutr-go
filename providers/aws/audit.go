@@ -13,7 +13,7 @@ import (
 )
 
 // ListAuditLogs : List audit logs
-func (api DynamoAPI) ListAuditLogs(req models.Request, pathParams map[string]string, queryParams map[string]string) ([]models.AuditLog, error) {
+func (api DynamoAPI) ListAuditLogs(req models.Request, pathParams map[string]string, queryParams map[string][]string) ([]models.AuditLog, error) {
 	// Only fetch audit logs if the table is configured
 	if api.Config.AuditTable == "" {
 		return nil, &models.NotFound{
@@ -22,7 +22,7 @@ func (api DynamoAPI) ListAuditLogs(req models.Request, pathParams map[string]str
 	}
 
 	// Get the user
-	_, err := api.InitializeRequest(api, req)
+	_, err := api.InitializeRequest(req)
 	if err != nil {
 		// Bad user - pass the error through
 		return nil, err
@@ -44,16 +44,14 @@ func (api DynamoAPI) ListAuditLogs(req models.Request, pathParams map[string]str
 
 	// Merge pathParams into queryParams
 	for key, value := range pathParams {
-		queryParams[key] = value
+		queryParams[key] = append(queryParams[key], value)
 	}
 
 	// Build filters
-	rawConds, hasConditions, err := api.Filter(&api.Filtering, nil, queryParams)
-	if err != nil {
+	if rawConds, err := api.Filtering.Filter(nil, queryParams, ""); err != nil {
 		log.Errorln("Error encountered during filtering", err)
 		return nil, err
-	}
-	if hasConditions {
+	} else if rawConds != nil {
 		conditions := rawConds.(expression.ConditionBuilder)
 		expr, err := expression.NewBuilder().WithFilter(conditions).Build()
 		if err != nil {
@@ -82,7 +80,7 @@ func (api DynamoAPI) ListAuditLogs(req models.Request, pathParams map[string]str
 }
 
 // auditLog : Creates an audit log
-func (api DynamoAPI) auditLog(action string, request models.Request, user models.User, resource *map[string]string, changes *map[string]string) {
+func (api DynamoAPI) auditLog(action string, request models.Request, user models.User, resource *map[string]string, changes *map[string]interface{}) {
 	// Only send audit logs if the table is configured
 	if api.Config.AuditTable == "" {
 		return

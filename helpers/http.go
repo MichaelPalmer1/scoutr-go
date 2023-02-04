@@ -3,6 +3,7 @@ package helpers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -20,25 +21,82 @@ type userAccess struct {
 // HTTPErrorHandler : Handle HTTP errors
 func HTTPErrorHandler(err error, w http.ResponseWriter) bool {
 	if err != nil {
+		// Marshal the error
+		var errorString string
+		bs, err := json.Marshal(err)
+		if err != nil {
+			log.WithError(err).Error("Failed to marshal output")
+			errorString = err.Error()
+		} else {
+			errorString = string(bs)
+		}
+
+		// Select the error code
+		var errorCode int
 		switch err.(type) {
 		case *models.Unauthorized:
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			errorCode = http.StatusUnauthorized
 		case *models.Forbidden:
-			http.Error(w, err.Error(), http.StatusForbidden)
+			errorCode = http.StatusForbidden
 		case *models.BadRequest:
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			errorCode = http.StatusBadRequest
 		case *models.NotFound:
-			http.Error(w, err.Error(), http.StatusNotFound)
+			errorCode = http.StatusNotFound
 		default:
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			errorCode = http.StatusInternalServerError
 		}
+
+		// Trigger the error
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.WriteHeader(errorCode)
+		if _, err := fmt.Fprintln(w, errorString); err != nil {
+			log.WithError(err).Error("Failed to write error content")
+		}
+
 		return true
 	}
 	return false
 }
 
+func BuildHttpRequest(api base.ScoutrBase, r *http.Request, params httprouter.Params) models.Request {
+	pathParams := make(map[string]string)
+	queryParams := make(map[string][]string)
+
+	// Parse query params
+	for key, values := range r.URL.Query() {
+		queryParams[key] = values
+	}
+
+	// Parse path params
+	for _, item := range params {
+		pathParams[item.Key] = item.Value
+	}
+
+	// Parse the request body
+	var body interface{}
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		body = nil
+	}
+
+	// Build request
+	req := models.Request{
+		User:        GetUserFromOIDC(r, api),
+		Method:      r.Method,
+		Path:        r.URL.Path,
+		Body:        body,
+		SourceIP:    r.RemoteAddr,
+		UserAgent:   r.UserAgent(),
+		PathParams:  pathParams,
+		QueryParams: queryParams,
+	}
+
+	return req
+}
+
 // InitHTTPServer : Initialize the HTTP server
-func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint string, historyActions []string) (*httprouter.Router, error) {
+func InitHTTPServer(api base.ScoutrBase, primaryListEndpoint string) (*httprouter.Router, error) {
 	// Format primary endpoint
 	if !strings.HasPrefix(primaryListEndpoint, "/") {
 		primaryListEndpoint = "/" + primaryListEndpoint
@@ -52,32 +110,8 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 	}
 
 	list := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		pathParams := make(map[string]string)
-		queryParams := make(map[string]string)
-
-		// Generate request user
-		requestUser := GetUserFromOIDC(req, api)
-
-		// Parse query params
-		for key, values := range req.URL.Query() {
-			queryParams[key] = values[0]
-		}
-
-		// Parse path params
-		for _, item := range params {
-			pathParams[item.Key] = item.Value
-		}
-
-		// Build the request model
-		request := models.Request{
-			User:        requestUser,
-			Method:      req.Method,
-			Path:        req.URL.Path,
-			PathParams:  pathParams,
-			QueryParams: queryParams,
-			SourceIP:    req.RemoteAddr,
-			UserAgent:   req.UserAgent(),
-		}
+		// Build request
+		request := BuildHttpRequest(api, req, params)
 
 		// List the table
 		data, err := api.List(request)
@@ -89,7 +123,7 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 
 		// Marshal the response and write it to output
 		out, _ := json.Marshal(data)
-		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(out)
 		if err != nil {
 			log.Errorf("Error writing output: %v", err)
@@ -97,29 +131,16 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 	}
 
 	search := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		// Generate request user
-		requestUser := GetUserFromOIDC(req, api)
-
-		// Parse the request body
-		var body []string
-		err := json.NewDecoder(req.Body).Decode(&body)
-		if err != nil {
-			http.Error(w, "Invalid request", http.StatusBadRequest)
+		// Build request
+		request := BuildHttpRequest(api, req, params)
+		values, ok := request.Body.([]string)
+		if !ok {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
-		// Build the request model
-		request := models.Request{
-			User:      requestUser,
-			Method:    req.Method,
-			Path:      req.URL.Path,
-			Body:      body,
-			SourceIP:  req.RemoteAddr,
-			UserAgent: req.UserAgent(),
-		}
-
 		// Search the table
-		data, err := api.Search(request, params.ByName("key"), body)
+		data, err := api.Search(request, params.ByName("key"), values)
 
 		// Check for errors in the response
 		if HTTPErrorHandler(err, w) {
@@ -128,7 +149,7 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 
 		// Marshal the response and write it to output
 		out, _ := json.Marshal(data)
-		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(out)
 		if err != nil {
 			log.Errorf("Error writing output: %v", err)
@@ -161,28 +182,19 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 	}
 
 	userHasPermission := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		// Get user
-		requestUser := GetUserFromOIDC(req, api)
-
-		// Build the request model
-		request := models.Request{
-			User:   requestUser,
-			Method: req.Method,
-			Path:   req.URL.Path,
-		}
-		_ = request
+		// Build request
+		request := BuildHttpRequest(api, req, params)
 
 		// Parse the request body
-		access := userAccess{}
-		err := json.NewDecoder(req.Body).Decode(&access)
-		if err != nil {
+		access, ok := request.Body.(userAccess)
+		if !ok {
 			http.Error(w, "Invalid request", http.StatusBadRequest)
 			return
 		}
 
 		// Check for authorization and save to output object
 		output := map[string]bool{
-			"authorized": api.CanAccessEndpoint(api, access.Method, access.Path, nil, &request),
+			"authorized": api.CanAccessEndpoint(access.Method, access.Path, nil, &request),
 		}
 
 		// Marshal data and write to output
@@ -203,33 +215,11 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 	}
 
 	audit := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		pathParams := make(map[string]string)
-		queryParams := make(map[string]string)
-
-		requestUser := GetUserFromOIDC(req, api)
-
-		// Parse query params
-		for key, values := range req.URL.Query() {
-			queryParams[key] = values[0]
-		}
-
-		// Parse path params
-		for _, item := range params {
-			pathParams[item.Key] = item.Value
-		}
-
-		// Build the request model
-		request := models.Request{
-			User:        requestUser,
-			Method:      req.Method,
-			Path:        req.URL.Path,
-			QueryParams: queryParams,
-			SourceIP:    req.RemoteAddr,
-			UserAgent:   req.UserAgent(),
-		}
+		// Build request
+		request := BuildHttpRequest(api, req, params)
 
 		// List the table
-		data, err := api.ListAuditLogs(request, pathParams, queryParams)
+		data, err := api.ListAuditLogs(request, request.PathParams, request.QueryParams)
 
 		// Check for errors in the response
 		if HTTPErrorHandler(err, w) {
@@ -238,7 +228,7 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 
 		// Marshal the response and write it to output
 		out, _ := json.Marshal(data)
-		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(out)
 		if err != nil {
 			log.Errorf("Error writing output: %v", err)
@@ -246,27 +236,11 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 	}
 
 	history := func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		queryParams := make(map[string]string)
-
-		requestUser := GetUserFromOIDC(req, api)
-
-		// Parse query params
-		for key, values := range req.URL.Query() {
-			queryParams[key] = values[0]
-		}
-
-		// Build the request model
-		request := models.Request{
-			User:        requestUser,
-			Method:      req.Method,
-			Path:        req.URL.Path,
-			QueryParams: queryParams,
-			SourceIP:    req.RemoteAddr,
-			UserAgent:   req.UserAgent(),
-		}
+		// Build request
+		request := BuildHttpRequest(api, req, params)
 
 		// List the table
-		data, err := api.History(request, "id", params.ByName("item"), queryParams, []string{"CREATE", "UPDATE", "DELETE"})
+		data, err := api.History(request, "id", params.ByName("item"), request.QueryParams, []string{"CREATE", "UPDATE", "DELETE"})
 
 		// Check for errors in the response
 		if HTTPErrorHandler(err, w) {
@@ -275,7 +249,7 @@ func InitHTTPServer(api base.BaseAPI, partitionKey string, primaryListEndpoint s
 
 		// Marshal the response and write it to output
 		out, _ := json.Marshal(data)
-		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(out)
 		if err != nil {
 			log.Errorf("Error writing output: %v", err)

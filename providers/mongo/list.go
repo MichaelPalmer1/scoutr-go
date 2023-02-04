@@ -1,4 +1,4 @@
-package azure
+package mongo
 
 import (
 	"github.com/MichaelPalmer1/scoutr-go/models"
@@ -7,7 +7,7 @@ import (
 )
 
 // List : Lists all items in a table
-func (api MongoDBAPI) List(req models.Request) ([]models.Record, error) {
+func (api MongoAPI) List(req models.Request) ([]models.Record, error) {
 	records := []models.Record{}
 	collection := api.Client.C(api.Config.DataTable)
 
@@ -57,7 +57,7 @@ func (api MongoDBAPI) List(req models.Request) ([]models.Record, error) {
 }
 
 // ListUniqueValues : Lists unique values for a column
-func (api MongoDBAPI) ListUniqueValues(req models.Request, uniqueKey string) ([]string, error) {
+func (api MongoAPI) ListUniqueValues(req models.Request, uniqueKey string) ([]string, error) {
 	records := []string{}
 	collection := api.Client.C(api.Config.DataTable)
 
