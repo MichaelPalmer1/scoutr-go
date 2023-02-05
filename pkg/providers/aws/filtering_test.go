@@ -9,7 +9,7 @@ import (
 )
 
 func TestOperations(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 
 	operationMap := f.Operations()
 
@@ -19,7 +19,7 @@ func TestOperations(t *testing.T) {
 }
 
 func TestBuildInExpr(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 
 	var values []string
 	for i := 0; i < 327; i++ {
@@ -53,7 +53,7 @@ func TestBuildInExpr(t *testing.T) {
 }
 
 func TestBuildInExprSingleValue(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conditions := f.BuildInExpr("key", []string{"1"}, false)
 
 	if !conditions.IsSet() {
@@ -71,7 +71,7 @@ func TestBuildInExprSingleValue(t *testing.T) {
 }
 
 func TestBuildInExprEmpty(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conditions := f.BuildInExpr("key", nil, false)
 
 	if conditions.IsSet() {
@@ -80,7 +80,7 @@ func TestBuildInExprEmpty(t *testing.T) {
 }
 
 func TestBuildInExprNegated(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 
 	var values []string
 	for i := 0; i < 327; i++ {
@@ -113,7 +113,7 @@ func TestBuildInExprNegated(t *testing.T) {
 }
 
 func TestBuildInExprSingleValueNegated(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conditions := f.BuildInExpr("key", []string{"1"}, true)
 
 	if !conditions.IsSet() {
@@ -131,7 +131,7 @@ func TestBuildInExprSingleValueNegated(t *testing.T) {
 }
 
 func TestBuildInExprEmptyNegated(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conditions := f.BuildInExpr("key", nil, true)
 
 	if conditions.IsSet() {
@@ -140,7 +140,7 @@ func TestBuildInExprEmptyNegated(t *testing.T) {
 }
 
 func TestAnd(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 
 	cond1 := expression.Name("key1").Equal(expression.Value("val1"))
 	cond2 := expression.Name("key2").Equal(expression.Value("val2"))
@@ -163,7 +163,7 @@ func TestAnd(t *testing.T) {
 }
 
 func TestAndCond1(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 
 	cond1 := expression.Name("key1").Equal(expression.Value("val1"))
 
@@ -185,7 +185,7 @@ func TestAndCond1(t *testing.T) {
 }
 
 func TestAndCond2(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 
 	cond2 := expression.Name("key2").Equal(expression.Value("val2"))
 
@@ -207,7 +207,7 @@ func TestAndCond2(t *testing.T) {
 }
 
 func TestAndCondsNil(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 
 	conditions := f.And(nil, nil).(expression.ConditionBuilder)
 
@@ -217,7 +217,7 @@ func TestAndCondsNil(t *testing.T) {
 }
 
 func TestOr(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 
 	cond1 := expression.Name("key1").Equal(expression.Value("val1"))
 	cond2 := expression.Name("key2").Equal(expression.Value("val2"))
@@ -240,7 +240,7 @@ func TestOr(t *testing.T) {
 }
 
 func TestOrCond1(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 
 	cond1 := expression.Name("key1").Equal(expression.Value("val1"))
 
@@ -262,7 +262,7 @@ func TestOrCond1(t *testing.T) {
 }
 
 func TestOrCond2(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 
 	cond2 := expression.Name("key2").Equal(expression.Value("val2"))
 
@@ -284,7 +284,7 @@ func TestOrCond2(t *testing.T) {
 }
 
 func TestOrCondsNil(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 
 	conditions := f.Or(nil, nil).(expression.ConditionBuilder)
 
@@ -294,7 +294,7 @@ func TestOrCondsNil(t *testing.T) {
 }
 
 func TestEquals(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.Equals("key", "value123")
 	if err != nil {
 		t.Error(err)
@@ -316,7 +316,7 @@ func TestEquals(t *testing.T) {
 }
 
 func TestNotEqual(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.NotEqual("key", "value123")
 	if err != nil {
 		t.Error(err)
@@ -338,7 +338,7 @@ func TestNotEqual(t *testing.T) {
 }
 
 func TestGreaterThan(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.GreaterThan("key", "value123")
 	if err != nil {
 		t.Error(err)
@@ -360,7 +360,7 @@ func TestGreaterThan(t *testing.T) {
 }
 
 func TestGreaterThanEqual(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.GreaterThanEqual("key", "value123")
 	if err != nil {
 		t.Error(err)
@@ -382,7 +382,7 @@ func TestGreaterThanEqual(t *testing.T) {
 }
 
 func TestLessThan(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.LessThan("key", "value123")
 	if err != nil {
 		t.Error(err)
@@ -404,7 +404,7 @@ func TestLessThan(t *testing.T) {
 }
 
 func TestLessThanEqual(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.LessThanEqual("key", "value123")
 	if err != nil {
 		t.Error(err)
@@ -426,7 +426,7 @@ func TestLessThanEqual(t *testing.T) {
 }
 
 func TestStartsWith(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.StartsWith("key", "value123")
 	if err != nil {
 		t.Error(err)
@@ -448,7 +448,7 @@ func TestStartsWith(t *testing.T) {
 }
 
 func TestContains(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.Contains("key", "value123")
 	if err != nil {
 		t.Error(err)
@@ -470,7 +470,7 @@ func TestContains(t *testing.T) {
 }
 
 func TestNotContains(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.NotContains("key", "value123")
 	if err != nil {
 		t.Error(err)
@@ -492,7 +492,7 @@ func TestNotContains(t *testing.T) {
 }
 
 func TestExistsTrue(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.Exists("key", "true")
 	if err != nil {
 		t.Error(err)
@@ -514,7 +514,7 @@ func TestExistsTrue(t *testing.T) {
 }
 
 func TestExistsFalse(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.Exists("key", "false")
 	if err != nil {
 		t.Error(err)
@@ -536,7 +536,7 @@ func TestExistsFalse(t *testing.T) {
 }
 
 func TestExistsOther(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.Exists("key", "blah")
 
 	if conds != nil {
@@ -551,7 +551,7 @@ func TestExistsOther(t *testing.T) {
 }
 
 func TestBetween(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.Between("key", `["1", "2"]`)
 	if err != nil {
 		t.Error(err)
@@ -573,7 +573,7 @@ func TestBetween(t *testing.T) {
 }
 
 func TestBetweenInvalidValue(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.Between("key", false)
 	if conds != nil {
 		t.Error("Conditions should be nil")
@@ -587,7 +587,7 @@ func TestBetweenInvalidValue(t *testing.T) {
 }
 
 func TestBetweenUnmarshalError(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.Between("key", `{`)
 
 	if conds != nil {
@@ -599,7 +599,7 @@ func TestBetweenUnmarshalError(t *testing.T) {
 }
 
 func TestIn(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.In("key", `["1", "2"]`)
 	if err != nil {
 		t.Error(err)
@@ -621,7 +621,7 @@ func TestIn(t *testing.T) {
 }
 
 func TestInInvalidValue(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.In("key", false)
 
 	if conds != nil {
@@ -636,7 +636,7 @@ func TestInInvalidValue(t *testing.T) {
 }
 
 func TestInJsonUnmarshalError(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.In("key", `[`)
 
 	if conds != nil {
@@ -649,7 +649,7 @@ func TestInJsonUnmarshalError(t *testing.T) {
 }
 
 func TestNotIn(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.NotIn("key", `["1", "2"]`)
 	if err != nil {
 		t.Error(err)
@@ -671,7 +671,7 @@ func TestNotIn(t *testing.T) {
 }
 
 func TestNotInInvalidValue(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.NotIn("key", false)
 
 	if conds != nil {
@@ -686,7 +686,7 @@ func TestNotInInvalidValue(t *testing.T) {
 }
 
 func TestNotInJsonUnmarshalError(t *testing.T) {
-	f := aws.DynamoFiltering{}
+	f := aws.NewFilter()
 	conds, err := f.NotIn("key", `[`)
 
 	if conds != nil {
@@ -699,14 +699,13 @@ func TestNotInJsonUnmarshalError(t *testing.T) {
 }
 
 func TestFilter(t *testing.T) {
-	f := aws.DynamoFiltering{}
-	f.FilterBase = &f
-	f.ScoutrFilters = &f
+	f := aws.NewFilter()
 
 	filters := map[string][]string{
 		"key":      {"value"},
 		"key2":     {"value1", "value2"},
 		"key3__gt": {"value3"},
+		"key4__lt": nil,
 	}
 
 	conditions, err := f.Filter(nil, filters, "")
@@ -724,8 +723,31 @@ func TestFilter(t *testing.T) {
 		t.Error(err)
 	}
 
-	if *expr.Filter() != "(((#0 = :0) AND ((#1 = :1)) OR (#1 = :2))) AND (#2 > :3)" {
-		t.Errorf("Invalid filter expression. Expected '(((#0 = :0) AND ((#1 = :1)) OR (#1 = :2))) AND (#2 > :3)' but got '%s'", *expr.Filter())
+	if *expr.Filter() != "((#0 = :0) AND ((#1 = :1) OR (#1 = :2))) AND (#2 > :3)" {
+		t.Errorf("Invalid filter expression. Expected '((#0 = :0) AND ((#1 = :1) OR (#1 = :2))) AND (#2 > :3)' but got '%s'", *expr.Filter())
 	}
 
+}
+
+func TestMultiFilter(t *testing.T) {
+	f := aws.NewFilter()
+
+	conditions, err := f.MultiFilter(nil, "key", []string{"value1", "value2", "value3"})
+	if err != nil {
+		t.Error(err)
+	}
+
+	conds := conditions.(expression.ConditionBuilder)
+	if !conds.IsSet() {
+		t.Error("Conditions should be set")
+	}
+
+	expr, err := expression.NewBuilder().WithFilter(conds).Build()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if *expr.Filter() != "#0 IN (:0, :1, :2)" {
+		t.Errorf("Invalid filter expression. Expected '#0 IN (:0, :1, :2)' but got '%s'", *expr.Filter())
+	}
 }

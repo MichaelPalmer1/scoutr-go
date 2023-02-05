@@ -27,12 +27,7 @@ func (api *DynamoAPI) Init(config aws.Config) {
 	api.Client = dynamodb.NewFromConfig(config)
 	api.auditClient = cloudtraildata.NewFromConfig(config)
 	api.cloudTrailClient = cloudtrail.NewFromConfig(config)
-	f := DynamoFiltering{}
-	f.Filtering = base.Filtering{
-		FilterBase:    &f,
-		ScoutrFilters: &f,
-	}
-	api.filtering = f
+	api.filtering = NewFilter()
 	api.ScoutrBase = api
 }
 

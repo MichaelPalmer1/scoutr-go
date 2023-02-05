@@ -14,6 +14,13 @@ type DynamoFiltering struct {
 	base.Filtering
 }
 
+func NewFilter() DynamoFiltering {
+	f := DynamoFiltering{}
+	f.FilterBase = &f
+	f.ScoutrFilters = &f
+	return f
+}
+
 // Operations : Map of supported operations for this filter provider
 func (f *DynamoFiltering) Operations() base.OperationMap {
 	return base.OperationMap{
@@ -54,11 +61,11 @@ func (f *DynamoFiltering) Or(condition1, condition2 interface{}) interface{} {
 	cond1, ok1 := condition1.(expression.ConditionBuilder)
 	cond2, ok2 := condition2.(expression.ConditionBuilder)
 
-	if ok1 && ok2 {
+	if ok1 && cond1.IsSet() && ok2 && cond2.IsSet() {
 		return expression.Or(cond1, cond2)
-	} else if ok1 {
+	} else if ok1 && cond1.IsSet() {
 		return cond1
-	} else if ok2 {
+	} else if ok2 && cond2.IsSet() {
 		return cond2
 	} else {
 		return expression.ConditionBuilder{}

@@ -54,8 +54,12 @@ type ScoutrFilters interface {
 // FilterBase : Interface used to generalize the filter logic across multiple providers
 type FilterBase interface {
 	Operations() OperationMap
+
+	// Filter operation, Returns generated conditions and any errors
 	Filter(user *types.User, filters map[string][]string, action string) (interface{}, error)
-	userFilters([]types.FilterField) (interface{}, error)
+
+	// User filters
+	userFilters(filterFields []types.FilterField) (interface{}, error)
 }
 
 type Filtering struct {
@@ -107,23 +111,21 @@ func (f *Filtering) filter(conditions interface{}, filters map[string][]string) 
 			}
 		} else if len(values) > 1 {
 			// Perform an OR query against all possible values for this key
+			// This ensures that all operations against the same key use OR operations
 			var filterConds interface{}
 			for _, item := range values {
+				// Perform filter for this item
 				result, err := f.performFilter(nil, key, item)
 				if err != nil {
 					return nil, err
 				}
+
+				// Combine with filterConds using OR expression
 				filterConds = f.ScoutrFilters.Or(filterConds, result)
 			}
-			conditions = f.ScoutrFilters.And(conditions, filterConds)
-		}
 
-		for _, item := range values {
-			// Perform the filter
-			conditions, err = f.performFilter(conditions, key, item)
-			if err != nil {
-				return nil, err
-			}
+			// Combine filterConds with conditions using AND expression
+			conditions = f.ScoutrFilters.And(conditions, filterConds)
 		}
 	}
 
@@ -211,7 +213,7 @@ func (f *Filtering) performFilter(conditions interface{}, key string, value inte
 // MultiFilter : Build multi-filter using the IN operator to search a key for 1 or more values
 func (f *Filtering) MultiFilter(user *types.User, key string, values []string) (interface{}, error) {
 	// Build the default user filters
-	conditions, err := f.Filter(user, nil, "")
+	conditions, err := f.Filter(user, nil, FilterActionRead)
 	if err != nil {
 		return nil, err
 	}
