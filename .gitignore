@@ -1,7 +1,6 @@
-scoutr-go
 .vs-code/
 .idea/
-__debug_bin
 vendor/
 bin/
 *.json
+coverage.txt

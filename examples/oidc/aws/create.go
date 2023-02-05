@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/MichaelPalmer1/scoutr-go/helpers"
-	"github.com/MichaelPalmer1/scoutr-go/models"
+	"github.com/MichaelPalmer1/scoutr-go/pkg/helpers"
+	"github.com/MichaelPalmer1/scoutr-go/pkg/types"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -21,7 +21,7 @@ func create(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	}
 
 	// Build the request model
-	request := models.Request{
+	request := types.Request{
 		User:      requestUser,
 		Method:    req.Method,
 		Path:      req.URL.Path,

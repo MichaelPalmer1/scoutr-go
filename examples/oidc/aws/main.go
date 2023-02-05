@@ -5,12 +5,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/MichaelPalmer1/scoutr-go/config"
-	"github.com/MichaelPalmer1/scoutr-go/helpers"
-	dynamo "github.com/MichaelPalmer1/scoutr-go/providers/aws"
-	"github.com/MichaelPalmer1/scoutr-go/providers/base"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/MichaelPalmer1/scoutr-go/pkg/config"
+	"github.com/MichaelPalmer1/scoutr-go/pkg/helpers"
+	dynamo "github.com/MichaelPalmer1/scoutr-go/pkg/providers/aws"
+	"github.com/MichaelPalmer1/scoutr-go/pkg/providers/base"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,18 +49,9 @@ func main() {
 		log.Fatalln("group-table argument is required")
 	}
 
-	creds := credentials.NewChainCredentials([]credentials.Provider{
-		&credentials.EnvProvider{},
-		//&ec2rolecreds.EC2RoleProvider{
-		//	Client: ec2metadata.New(session.Must(session.NewSession())),
-		//},
-		&credentials.SharedCredentialsProvider{},
-	})
-
-	api.Init(&aws.Config{
-		Region:      aws.String("us-east-1"),
-		Credentials: creds,
-	})
+	config := aws.NewConfig()
+	config.Region = "us-east-1"
+	api.Init(*config)
 
 	// Initialize http server
 	router, err := helpers.InitHTTPServer(api, "/items/")
