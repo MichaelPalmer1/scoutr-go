@@ -3,7 +3,7 @@ package types
 import (
 	"encoding/json"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 type baseError struct {
@@ -18,7 +18,7 @@ func (e *Unauthorized) Error() string {
 	if len(e.Messages) > 0 {
 		bs, err := json.Marshal(e.Messages)
 		if err != nil {
-			log.WithError(err).Error("Failed to marshal error data")
+			logrus.WithError(err).Error("Failed to marshal error data")
 		}
 
 		return string(bs)
@@ -34,7 +34,7 @@ func (e *Forbidden) Error() string {
 	if len(e.Messages) > 0 {
 		bs, err := json.Marshal(e.Messages)
 		if err != nil {
-			log.WithError(err).Error("Failed to marshal error data")
+			logrus.WithError(err).Error("Failed to marshal error data")
 		}
 
 		return string(bs)
@@ -50,7 +50,7 @@ func (e *BadRequest) Error() string {
 	if len(e.Messages) > 0 {
 		bs, err := json.Marshal(e.Messages)
 		if err != nil {
-			log.WithError(err).Error("Failed to marshal error data")
+			logrus.WithError(err).Error("Failed to marshal error data")
 		}
 
 		return string(bs)
@@ -66,7 +66,7 @@ func (e *NotFound) Error() string {
 	if len(e.Messages) > 0 {
 		bs, err := json.Marshal(e.Messages)
 		if err != nil {
-			log.WithError(err).Error("Failed to marshal error data")
+			logrus.WithError(err).Error("Failed to marshal error data")
 		}
 
 		return string(bs)

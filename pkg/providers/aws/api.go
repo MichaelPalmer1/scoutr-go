@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/MichaelPalmer1/scoutr-go/pkg/providers/base"
+	"github.com/MichaelPalmer1/scoutr-go/pkg/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
@@ -11,12 +12,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudtraildata"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	dynamoTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/cenkalti/backoff/v4"
 )
 
 // DynamoAPI : API, based off of Scoutr, used to talk to AWS DynamoDB
 type DynamoAPI struct {
 	*base.Scoutr
-	Client           *dynamodb.Client
+	Client           types.DynamoClientAPI
 	filtering        DynamoFiltering
 	auditClient      *cloudtraildata.Client
 	cloudTrailClient *cloudtrail.Client
@@ -31,7 +33,7 @@ func (api *DynamoAPI) Init(config aws.Config) {
 	api.ScoutrBase = api
 }
 
-func Scan[T any](client *dynamodb.Client, input *dynamodb.ScanInput) ([]T, error) {
+func Scan[T any](client types.DynamoClientAPI, input *dynamodb.ScanInput) ([]T, error) {
 	var results []T
 	paginator := dynamodb.NewScanPaginator(client, input)
 
@@ -52,7 +54,7 @@ func Scan[T any](client *dynamodb.Client, input *dynamodb.ScanInput) ([]T, error
 	return results, nil
 }
 
-func Query[T any](client *dynamodb.Client, input *dynamodb.QueryInput) ([]T, error) {
+func Query[T any](client types.DynamoClientAPI, input *dynamodb.QueryInput) ([]T, error) {
 	var results []T
 	paginator := dynamodb.NewQueryPaginator(client, input)
 
@@ -73,17 +75,33 @@ func Query[T any](client *dynamodb.Client, input *dynamodb.QueryInput) ([]T, err
 	return results, nil
 }
 
-func GetItem[T any](client *dynamodb.Client, input *dynamodb.GetItemInput) (*T, error) {
+func GetItem[T any](client types.DynamoClientAPI, input *dynamodb.GetItemInput) (*T, error) {
 	var output *T
+	var item map[string]dynamoTypes.AttributeValue
 
-	result, err := client.GetItem(context.TODO(), input)
-	if err != nil {
+	// Backoff operation
+	fn := func() error {
+		result, err := client.GetItem(context.TODO(), input)
+		if err != nil {
+			return err
+		}
+
+		item = result.Item
+
+		return nil
+	}
+
+	// Perform exponential backoff
+	if err := backoff.Retry(fn, backoff.NewExponentialBackOff()); err != nil {
 		return nil, err
-	} else if result.Item == nil {
+	}
+
+	// Item does not exist
+	if item == nil {
 		return nil, nil
 	}
 
-	if err := attributevalue.UnmarshalMap(result.Item, &output); err != nil {
+	if err := attributevalue.UnmarshalMap(item, &output); err != nil {
 		return nil, err
 	}
 
@@ -114,7 +132,7 @@ func (api *DynamoAPI) PutItem(table string, item interface{}, expr *expression.E
 	return nil
 }
 
-func UpdateItem[T any](client *dynamodb.Client, table string, key map[string]dynamoTypes.AttributeValue, expr expression.Expression) (*T, error) {
+func UpdateItem[T any](client types.DynamoClientAPI, table string, key map[string]dynamoTypes.AttributeValue, expr expression.Expression) (*T, error) {
 	var output *T
 
 	input := &dynamodb.UpdateItemInput{

@@ -85,7 +85,7 @@ func ValueInArray(validOptions []string, optionName string, customErrorMessage s
 	return func(input *types.ValidationInput, ch chan types.ValidationOutput) {
 		for _, item := range validOptions {
 			if item == input.Value {
-				ch <- types.ValidationOutput{Result: true}
+				ch <- types.ValidationOutput{Input: input, Result: true}
 				return
 			}
 		}
@@ -96,6 +96,7 @@ func ValueInArray(validOptions []string, optionName string, customErrorMessage s
 		}
 
 		ch <- types.ValidationOutput{
+			Input:   input,
 			Result:  false,
 			Message: errorMessage,
 			Error:   nil,

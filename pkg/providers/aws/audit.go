@@ -9,11 +9,12 @@ import (
 	"github.com/MichaelPalmer1/scoutr-go/pkg/providers/base"
 	"github.com/MichaelPalmer1/scoutr-go/pkg/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/cloudtraildata"
 	cloudTrailDataTypes "github.com/aws/aws-sdk-go-v2/service/cloudtraildata/types"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // ListAuditLogs : List audit logs
@@ -53,7 +54,7 @@ func (api DynamoAPI) ListAuditLogs(req types.Request, pathParams map[string]stri
 
 	// Build filters
 	if rawConds, err := api.filtering.Filter(nil, queryParams, ""); err != nil {
-		log.Errorln("Error encountered during filtering", err)
+		logrus.Errorln("Error encountered during filtering", err)
 		return nil, err
 	} else if rawConds != nil {
 		conditions := rawConds.(expression.ConditionBuilder)
@@ -83,7 +84,7 @@ func (api DynamoAPI) ListAuditLogs(req types.Request, pathParams map[string]stri
 	// Download the data
 	data, err := Scan[types.AuditLog](api.Client, &input)
 	if err != nil {
-		log.Errorln("Error while attempting to list records", err)
+		logrus.Errorln("Error while attempting to list records", err)
 		return nil, err
 	}
 
@@ -164,22 +165,30 @@ func (api DynamoAPI) auditLog(action string, request types.Request, user *types.
 	}
 
 	// Marshal the audit log to Dynamo format
-	// item, err := attributevalue.MarshalMap(auditLog)
-	// if err != nil {
-	// 	log.Errorln("Failed to marshal the audit log", err)
-	// 	log.Infof("Failed audit log: '%v'", auditLog)
-	// 	return
-	// }
+	item, err := attributevalue.MarshalMap(auditLog)
+	if err != nil {
+		logrus.Errorln("Failed to marshal the audit log", err)
+		logrus.Infof("Failed audit log: '%v'", auditLog)
+		return
+	}
 
 	// Generate the put item input
-	// input := dynamodb.PutItemInput{
-	// 	TableName: aws.String(api.Config.AuditTable),
-	// 	Item:      item,
-	// }
+	input := dynamodb.PutItemInput{
+		TableName: aws.String(api.Config.AuditTable),
+		Item:      item,
+	}
+
+	// Add the record to dynamo
+	_, err = api.Client.PutItem(context.TODO(), &input)
+	if err != nil {
+		logrus.Errorln("Failed to put audit log in Dynamo", err)
+		logrus.Infof("Failed audit log: '%v'", auditLog)
+		return
+	}
 
 	bs, err := json.Marshal(auditEvent)
 	if err != nil {
-		log.WithError(err).WithField("AuditEvent", auditEvent).Errorf("Failed to marshal audit event")
+		logrus.WithError(err).WithField("AuditEvent", auditEvent).Errorf("Failed to marshal audit event")
 		return
 	}
 
@@ -195,16 +204,13 @@ func (api DynamoAPI) auditLog(action string, request types.Request, user *types.
 		AuditEvents: auditEvents,
 	})
 
-	for _, item := range result.Failed {
-		log.Errorf("Failed to record event %s - %s: %s", aws.ToString(item.Id), aws.ToString(item.ErrorCode), aws.ToString(item.ErrorMessage))
+	if err != nil {
+		logrus.WithError(err).Error("Failed to put audit event to cloudtrail lake")
+		return
 	}
 
-	// Add the record to dynamo
-	// _, err = api.Client.PutItem(context.TODO(), &input)
-	// if err != nil {
-	// 	log.Errorln("Failed to put audit log in Dynamo", err)
-	// 	log.Infof("Failed audit log: '%v'", auditLog)
-	// 	return
-	// }
+	for _, item := range result.Failed {
+		logrus.Errorf("Failed to record event %s - %s: %s", aws.ToString(item.Id), aws.ToString(item.ErrorCode), aws.ToString(item.ErrorMessage))
+	}
 
 }

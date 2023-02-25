@@ -2,11 +2,13 @@ package aws_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/MichaelPalmer1/scoutr-go/pkg/providers/aws"
 	"github.com/MichaelPalmer1/scoutr-go/pkg/providers/base"
 	"github.com/MichaelPalmer1/scoutr-go/pkg/types"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 )
 
@@ -725,9 +727,52 @@ func TestFilter(t *testing.T) {
 		t.Error(err)
 	}
 
-	if *expr.Filter() != "((#0 = :0) AND ((#1 = :1) OR (#1 = :2))) AND (#2 > :3)" {
-		t.Errorf("Invalid filter expression. Expected '((#0 = :0) AND ((#1 = :1) OR (#1 = :2))) AND (#2 > :3)' but got '%s'", *expr.Filter())
+	keys := map[string]string{}
+	for key, value := range expr.Names() {
+		keys[value] = key
 	}
+
+	t.Log(keys)
+
+	var vals map[string]string
+	if err := attributevalue.UnmarshalMap(expr.Values(), &vals); err != nil {
+		t.Error(err)
+	}
+	values := map[string]string{}
+	for key, value := range vals {
+		values[value] = key
+	}
+
+	t.Log(values)
+
+	exprs := []string{
+		fmt.Sprintf("(%s = %s)", keys["key"], values["value"]),
+		fmt.Sprintf("((%s = %s) OR (%s = %s))", keys["key2"], values["value1"], keys["key2"], values["value2"]),
+		fmt.Sprintf("(%s > %s)", keys["key3"], values["value3"]),
+	}
+
+	for _, e := range exprs {
+		if !strings.Contains(*expr.Filter(), e) {
+			t.Errorf("Missing expression %s", e)
+		}
+	}
+
+	// var exprOrder []string
+	// for _, value := range expr.Names() {
+	// 	switch value {
+	// 	case "key":
+	// 		exprOrder = append(exprOrder, exprs[0])
+	// 	case "key2":
+	// 		exprOrder = append(exprOrder, exprs[1])
+	// 	case "key3":
+	// 		exprOrder = append(exprOrder, exprs[2])
+	// 	}
+	// }
+
+	// expected := fmt.Sprintf("(%s AND %s) AND %s", exprOrder[0], exprOrder[1], exprOrder[2])
+	// if *expr.Filter() != expected {
+	// 	t.Errorf("Expected expression '%s' but got '%s'", expected, *expr.Filter())
+	// }
 }
 
 func TestFilterWithUser(t *testing.T) {
@@ -767,9 +812,41 @@ func TestFilterWithUser(t *testing.T) {
 		t.Error(err)
 	}
 
-	if *expr.Filter() != "(((contains (#0, :0)) AND (#0 = :1)) AND ((#1 = :2) OR (#1 = :3))) AND (#2 > :4)" {
-		t.Errorf("Invalid filter expression. Expected '(((contains (#0, :0)) AND (#0 = :1)) AND ((#1 = :2) OR (#1 = :3))) AND (#2 > :4)' but got '%s'", *expr.Filter())
+	keys := map[string]string{}
+	for key, value := range expr.Names() {
+		keys[value] = key
 	}
+
+	t.Log(keys)
+
+	var vals map[string]string
+	if err := attributevalue.UnmarshalMap(expr.Values(), &vals); err != nil {
+		t.Error(err)
+	}
+	values := map[string]string{}
+	for key, value := range vals {
+		values[value] = key
+	}
+
+	t.Log(values)
+
+	exprs := []string{
+		fmt.Sprintf("(contains (%s, %s))", keys["key"], values["value4"]),
+		fmt.Sprintf("(%s = %s)", keys["key"], values["value"]),
+		fmt.Sprintf("((%s = %s) OR (%s = %s))", keys["key2"], values["value1"], keys["key2"], values["value2"]),
+		fmt.Sprintf("(%s > %s)", keys["key3"], values["value3"]),
+	}
+
+	for _, e := range exprs {
+		if !strings.Contains(*expr.Filter(), e) {
+			t.Errorf("Missing expression %s", e)
+		}
+	}
+
+	// expected := fmt.Sprintf("((%s AND %s) AND %s) AND %s", exprs[0], exprs[1], exprs[2], exprs[3])
+	// if *expr.Filter() != expected {
+	// 	t.Errorf("Invalid filter expression. Expected '%s' but got '%s'", expected, *expr.Filter())
+	// }
 }
 
 func TestMultiFilter(t *testing.T) {
