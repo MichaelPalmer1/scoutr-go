@@ -194,17 +194,12 @@ func (f *DynamoFiltering) NotIn(key string, values interface{}) (interface{}, er
 	return f.BuildInExpr(key, valueList, true), nil
 }
 
-// generateInFilter : Given a column and list of values, generate a filter expression for checking if
-// the column contains the values. Returns nil if no values are supplied.
+// Given a column and list of values, generate a filter expression for checking if
+// the column contains the values. Returns empty ConditionBuilder if no values are supplied.
 func generateInFilter(key string, values []string) expression.ConditionBuilder {
 	var firstValue expression.OperandBuilder
 	var filterValues []expression.OperandBuilder
 	var condition expression.ConditionBuilder
-
-	// nil check on provided values
-	if values == nil {
-		return condition
-	}
 
 	// Loop through all the values
 	for n, value := range values {
@@ -219,7 +214,7 @@ func generateInFilter(key string, values []string) expression.ConditionBuilder {
 	}
 
 	if len(values) == 0 {
-		return condition
+		return expression.ConditionBuilder{}
 	} else if len(values) == 1 {
 		condition = expression.Name(key).In(firstValue)
 	} else {
@@ -229,6 +224,11 @@ func generateInFilter(key string, values []string) expression.ConditionBuilder {
 	return condition
 }
 
+// Build a condition expression using the IN operator
+// If there are more than 100 values, expressions will be split up into 100-value groupings
+// and combined together using the OR operation.
+//
+// In order to negate the expression (i.e. not in), specify negate = true.
 func (f *DynamoFiltering) BuildInExpr(attr string, values []string, negate bool) expression.ConditionBuilder {
 	var conditions interface{}
 	startIndex := 0

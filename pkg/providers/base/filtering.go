@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/MichaelPalmer1/scoutr-go/pkg/types"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -30,12 +30,12 @@ const (
 	OperationNotIn            = "notin"
 )
 
-// OperationMap : Map of magic operator to a callable to perform the filter
+// OperationMap : Map of operator to a callable to perform the filter
 type OperationMap map[string]func(string, interface{}) (interface{}, error)
 
 type ScoutrFilters interface {
-	And(key interface{}, value interface{}) interface{}
-	Or(key interface{}, value interface{}) interface{}
+	And(condition1 interface{}, condition2 interface{}) interface{}
+	Or(condition1 interface{}, condition2 interface{}) interface{}
 	Equals(key string, value interface{}) (interface{}, error)
 	NotEqual(key string, value interface{}) (interface{}, error)
 	StartsWith(key string, value interface{}) (interface{}, error)
@@ -168,7 +168,7 @@ func (f *Filtering) userFilters(filterFields []types.FilterField) (interface{}, 
 }
 
 func (f *Filtering) getOperator(key string) (string, string) {
-	// Check if this is a magic operator
+	// Check if this is a operator
 	operation := OperationEqual
 	matches := regexp.MustCompile("^(.+)__(.+)$").FindAllStringSubmatch(key, -1)
 
@@ -192,7 +192,7 @@ func (f *Filtering) performFilter(conditions interface{}, key string, value inte
 	fn, ok := f.FilterBase.Operations()[operator]
 	if !ok {
 		return nil, &types.BadRequest{
-			Message: fmt.Sprintf("Provider does not support magic operator '%s'", operator),
+			Message: fmt.Sprintf("Provider does not support operator '%s'", operator),
 		}
 	}
 
@@ -228,7 +228,7 @@ func (f *Filtering) MultiFilter(user *types.User, key string, values []string) (
 	// Values are expected to be in JSON-encoded string
 	vals, err := json.Marshal(values)
 	if err != nil {
-		log.Errorln("Failed to marshal search data")
+		logrus.Errorln("Failed to marshal search data")
 		return nil, err
 	}
 

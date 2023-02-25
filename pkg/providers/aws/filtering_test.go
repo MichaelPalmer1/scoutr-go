@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/MichaelPalmer1/scoutr-go/pkg/providers/aws"
+	"github.com/MichaelPalmer1/scoutr-go/pkg/providers/base"
+	"github.com/MichaelPalmer1/scoutr-go/pkg/types"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 )
 
@@ -726,7 +728,48 @@ func TestFilter(t *testing.T) {
 	if *expr.Filter() != "((#0 = :0) AND ((#1 = :1) OR (#1 = :2))) AND (#2 > :3)" {
 		t.Errorf("Invalid filter expression. Expected '((#0 = :0) AND ((#1 = :1) OR (#1 = :2))) AND (#2 > :3)' but got '%s'", *expr.Filter())
 	}
+}
 
+func TestFilterWithUser(t *testing.T) {
+	f := aws.NewFilter()
+
+	filters := map[string][]string{
+		"key":      {"value"},
+		"key2":     {"value1", "value2"},
+		"key3__gt": {"value3"},
+		"key4__lt": nil,
+	}
+
+	user := &types.User{
+		Permissions: types.Permissions{
+			ReadFilters: []types.FilterField{
+				{
+					Field:    "key",
+					Operator: base.OperationContains,
+					Value:    "value4",
+				},
+			},
+		},
+	}
+
+	conditions, err := f.Filter(user, filters, "")
+	if err != nil {
+		t.Error(err)
+	}
+
+	conds := conditions.(expression.ConditionBuilder)
+	if !conds.IsSet() {
+		t.Error("Conditions should be set")
+	}
+
+	expr, err := expression.NewBuilder().WithFilter(conds).Build()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if *expr.Filter() != "(((contains (#0, :0)) AND (#0 = :1)) AND ((#1 = :2) OR (#1 = :3))) AND (#2 > :4)" {
+		t.Errorf("Invalid filter expression. Expected '(((contains (#0, :0)) AND (#0 = :1)) AND ((#1 = :2) OR (#1 = :3))) AND (#2 > :4)' but got '%s'", *expr.Filter())
+	}
 }
 
 func TestMultiFilter(t *testing.T) {
