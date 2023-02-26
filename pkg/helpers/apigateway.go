@@ -7,11 +7,10 @@ import (
 
 	"github.com/MichaelPalmer1/scoutr-go/pkg/config"
 	dynamo "github.com/MichaelPalmer1/scoutr-go/pkg/providers/aws"
-	"github.com/MichaelPalmer1/scoutr-go/pkg/providers/base"
 	"github.com/MichaelPalmer1/scoutr-go/pkg/types"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // InitAPIGateway : Initialize API Gateway
@@ -42,13 +41,7 @@ func InitAPIGateway(event events.APIGatewayProxyRequest, config config.Config) (
 	}
 
 	// Create API
-	api := dynamo.DynamoAPI{
-		Scoutr: &base.Scoutr{
-			Config: config,
-		},
-	}
-
-	api.Init(*aws.NewConfig())
+	api := dynamo.NewDynamoAPI(config, *aws.NewConfig())
 
 	return api, request
 }
@@ -72,7 +65,7 @@ func APIGatewayErrorHandler(err error) *events.APIGatewayProxyResponse {
 		default:
 			response.StatusCode = http.StatusInternalServerError
 		}
-		log.Errorln("Encountered error", err)
+		logrus.Errorln("Encountered error", err)
 		response.Body = fmt.Sprintf("%s", err)
 		return response
 	}
@@ -89,7 +82,7 @@ func ProcessAPIGatewayResponse(data interface{}) (events.APIGatewayProxyResponse
 		response.StatusCode = http.StatusInternalServerError
 		response.Body = "Failed to marshal output"
 		response.Headers["Content-Type"] = "text/plain"
-		log.Errorln("Error marshalling output", err)
+		logrus.Errorln("Error marshalling output", err)
 		return response, nil
 	}
 

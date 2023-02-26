@@ -1,6 +1,6 @@
 package aws
 
-// Update : Update an item
+// Patch : Patch an item
 // func (api DynamoAPI) Patch(request types.Request, partitionKey map[string]interface{}, item map[string]interface{}, validation map[string]types.FieldValidation, requiredFields []string, auditAction string) (interface{}, error) {
 // 	builder := expression.NewBuilder()
 

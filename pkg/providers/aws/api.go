@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 
+	"github.com/MichaelPalmer1/scoutr-go/pkg/config"
 	"github.com/MichaelPalmer1/scoutr-go/pkg/providers/base"
 	"github.com/MichaelPalmer1/scoutr-go/pkg/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	dynamoTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/cenkalti/backoff/v4"
+	"github.com/sirupsen/logrus"
 )
 
 // DynamoAPI : API, based off of Scoutr, used to talk to AWS DynamoDB
@@ -22,16 +24,57 @@ type DynamoAPI struct {
 	filtering        DynamoFiltering
 	auditClient      *cloudtraildata.Client
 	cloudTrailClient *cloudtrail.Client
+	indices          map[string][]string
+}
+
+func NewDynamoAPI(scoutrConfig config.Config, awsConfig aws.Config) DynamoAPI {
+	api := DynamoAPI{
+		Client:           dynamodb.NewFromConfig(awsConfig),
+		auditClient:      cloudtraildata.NewFromConfig(awsConfig),
+		cloudTrailClient: cloudtrail.NewFromConfig(awsConfig),
+		filtering:        NewFilter(),
+		Scoutr: &base.Scoutr{
+			Config: scoutrConfig,
+		},
+	}
+	api.ScoutrBase = api
+
+	// Learn about indices
+	if err := api.learnTables(); err != nil {
+		logrus.WithError(err).Fatal("Failed to learn tables")
+	}
+
+	return api
+}
+
+func (api DynamoAPI) learnTables() error {
+	output, err := api.Client.DescribeTable(context.TODO(), &dynamodb.DescribeTableInput{
+		TableName: &api.Config.DataTable,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, index := range output.Table.GlobalSecondaryIndexes {
+		var schema []string
+		for _, element := range index.KeySchema {
+			schema = append(schema, aws.ToString(element.AttributeName))
+		}
+		api.indices[aws.ToString(index.IndexName)] = schema
+	}
+
+	return nil
 }
 
 // Init : Initialize the Dynamo client
-func (api *DynamoAPI) Init(config aws.Config) {
-	api.Client = dynamodb.NewFromConfig(config)
-	api.auditClient = cloudtraildata.NewFromConfig(config)
-	api.cloudTrailClient = cloudtrail.NewFromConfig(config)
-	api.filtering = NewFilter()
-	api.ScoutrBase = api
-}
+// func (api *DynamoAPI) Init(config aws.Config) {
+// 	api.Client = dynamodb.NewFromConfig(config)
+// 	api.auditClient = cloudtraildata.NewFromConfig(config)
+// 	api.cloudTrailClient = cloudtrail.NewFromConfig(config)
+// 	api.filtering = NewFilter()
+// 	api.ScoutrBase = api
+// }
 
 func Scan[T any](client types.DynamoClientAPI, input *dynamodb.ScanInput) ([]T, error) {
 	var results []T

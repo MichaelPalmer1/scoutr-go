@@ -9,7 +9,7 @@ import (
 
 	"github.com/MichaelPalmer1/scoutr-go/pkg/config"
 	"github.com/MichaelPalmer1/scoutr-go/pkg/types"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -70,20 +70,20 @@ func (api *Scoutr) CanAccessEndpoint(method string, path string, user *types.Use
 		// Fetch the user
 		user, err = api.GetUser(request.User.ID, request.User.Data)
 		if err != nil {
-			log.WithError(err).Error("Failed to fetch user")
+			logrus.WithError(err).Error("Failed to fetch user")
 			return false
 		}
 
 		// Validate the user
 		if err := api.ValidateUser(user); err != nil {
-			log.WithError(err).Error("Encountered error while validating user")
+			logrus.WithError(err).Error("Encountered error while validating user")
 			return false
 		}
 	}
 
 	// Verify user was provided/looked up
 	if user == nil {
-		log.Warnln("Unable to validate if user has access to endpoint because user was nil")
+		logrus.Warnln("Unable to validate if user has access to endpoint because user was nil")
 		return false
 	}
 
@@ -134,9 +134,9 @@ func (api *Scoutr) ValidateRequest(req types.Request, user *types.User) error {
 		// Log request
 		userID := api.UserIdentifier(user)
 		if req.Method == http.MethodGet {
-			log.Infof("[%s] Performed %s on %s", userID, req.Method, req.Path)
+			logrus.Infof("[%s] Performed %s on %s", userID, req.Method, req.Path)
 		} else {
-			log.Infof("[%s] Performed %s on %s:\n%s", userID, req.Method, req.Path, req.Body)
+			logrus.Infof("[%s] Performed %s on %s:\n%s", userID, req.Method, req.Path, req.Body)
 		}
 
 		// User is authorized to access this endpoint
@@ -245,9 +245,7 @@ func (api *Scoutr) ValidateFields(validation map[string]types.FieldValidation, r
 func (api *Scoutr) PostProcess(data []types.Record, user *types.User) {
 	for _, item := range data {
 		for _, key := range user.ExcludeFields {
-			if _, ok := item[key]; ok {
-				delete(item, key)
-			}
+			delete(item, key)
 		}
 	}
 }
@@ -304,18 +302,22 @@ func (api Scoutr) InitializeRequest(req types.Request) (*types.User, error) {
 	// Get user
 	user, err := api.GetUser(req.User.ID, req.User.Data)
 	if err != nil {
+		if api.Config.ErrorFunc != nil {
+			api.Config.ErrorFunc(&req, user, err)
+		}
+
 		return nil, err
 	}
 
 	// Validate user
 	if err := api.ValidateUser(user); err != nil {
-		log.Warnf("[%s] Bad User - %s", api.UserIdentifier(user), err)
+		logrus.Warnf("[%s] Bad User - %s", api.UserIdentifier(user), err)
 		return nil, err
 	}
 
 	// Validate request
 	if err := api.ValidateRequest(req, user); err != nil {
-		log.Warnf("[%s] %s", api.UserIdentifier(user), err)
+		logrus.Warnf("[%s] %s", api.UserIdentifier(user), err)
 		return nil, err
 	}
 
@@ -382,7 +384,12 @@ func (api Scoutr) GetUser(id string, userData *types.UserData) (*types.User, err
 	// Try to find user in the auth table
 	if auth, err := api.ScoutrBase.GetAuth(id); err != nil {
 		// Error while fetching user
-		log.Errorf("Failed to get user: %v", err)
+		logrus.WithError(err).Errorf("Failed to get user %s", id)
+
+		if api.Config.ErrorFunc != nil {
+			api.Config.ErrorFunc(nil, &user, err)
+		}
+
 		return nil, err
 	} else if auth == nil {
 		// Failed to find user in the table
@@ -429,7 +436,7 @@ func (api Scoutr) GetUser(id string, userData *types.UserData) (*types.User, err
 	for _, groupID := range user.Groups {
 		group, err := api.ScoutrBase.GetGroup(groupID)
 		if err != nil {
-			log.WithError(err).Error("Error while fetching group")
+			logrus.WithError(err).Error("Error while fetching group")
 			return nil, err
 		} else if group == nil {
 			// Group is not in the table

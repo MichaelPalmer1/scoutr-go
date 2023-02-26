@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // List : Lists all items in a table
@@ -27,12 +27,23 @@ func (api DynamoAPI) List(req types.Request) ([]types.Record, error) {
 	// Build filters
 	conditions, err := api.filtering.Filter(user, api.BuildParams(req), "")
 	if err != nil {
-		log.Errorln("Error encountered during filtering", err)
+		logrus.WithError(err).Error("Filtering failed")
+
+		if api.Config.ErrorFunc != nil {
+			api.Config.ErrorFunc(&req, user, err)
+		}
+
 		return nil, err
 	}
 	if conditions != nil {
 		expr, err := expression.NewBuilder().WithFilter(conditions.(expression.ConditionBuilder)).Build()
 		if err != nil {
+			logrus.WithError(err).Error("Failed to build filter expression")
+
+			if api.Config.ErrorFunc != nil {
+				api.Config.ErrorFunc(&req, user, err)
+			}
+
 			return nil, err
 		}
 
@@ -45,7 +56,12 @@ func (api DynamoAPI) List(req types.Request) ([]types.Record, error) {
 	// Download the data
 	data, err := Scan[types.Record](api.Client, input)
 	if err != nil {
-		log.Errorln("Error while attempting to list records", err)
+		logrus.WithError(err).Error("Failed to list records")
+
+		if api.Config.ErrorFunc != nil {
+			api.Config.ErrorFunc(&req, user, err)
+		}
+
 		return nil, err
 	}
 
@@ -80,7 +96,12 @@ func (api DynamoAPI) ListUniqueValues(req types.Request, uniqueKey string) ([]st
 	// Build filters
 	conditions, err := api.filtering.Filter(user, params, "")
 	if err != nil {
-		log.Errorln("Error encountered during filtering", err)
+		logrus.WithError(err).Error("Filtering failed")
+
+		if api.Config.ErrorFunc != nil {
+			api.Config.ErrorFunc(&req, user, err)
+		}
+
 		return nil, err
 	}
 
@@ -93,6 +114,12 @@ func (api DynamoAPI) ListUniqueValues(req types.Request, uniqueKey string) ([]st
 	// Build filter
 	expr, err := expression.NewBuilder().WithFilter(conditions.(expression.ConditionBuilder)).WithProjection(projection).Build()
 	if err != nil {
+		logrus.WithError(err).Error("Failed to build filter expression")
+
+		if api.Config.ErrorFunc != nil {
+			api.Config.ErrorFunc(&req, user, err)
+		}
+
 		return nil, err
 	}
 
@@ -105,7 +132,12 @@ func (api DynamoAPI) ListUniqueValues(req types.Request, uniqueKey string) ([]st
 	// Download the data
 	data, err := Scan[types.Record](api.Client, input)
 	if err != nil {
-		log.Errorln("Error while attempting to list records", err)
+		logrus.WithError(err).Error("Failed to list records")
+
+		if api.Config.ErrorFunc != nil {
+			api.Config.ErrorFunc(&req, user, err)
+		}
+
 		return nil, err
 	}
 
