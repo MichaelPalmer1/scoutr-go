@@ -1,26 +1,31 @@
 package aws
 
 import (
+	"context"
+
 	"github.com/MichaelPalmer1/scoutr-go/models"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 // GetAuth : Fetch an auth identity from the collection
 // Responses:
-//  - nil, nil: user does not exist
-//  - nil, error: error while fetching user
-//  - user, nil: found user
+//   - nil, nil: user does not exist
+//   - nil, error: error while fetching user
+//   - user, nil: found user
 func (api DynamoAPI) GetAuth(id string) (*models.User, error) {
 	user := &models.User{ID: id}
 
 	// Try to find user in the auth table
-	result, err := api.Client.GetItem(&dynamodb.GetItemInput{
+	result, err := api.Client.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: aws.String(api.Config.AuthTable),
-		Key: map[string]*dynamodb.AttributeValue{
-			"id": {S: aws.String(id)},
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{
+				Value: id,
+			},
 		},
 	})
 	if err != nil {
@@ -30,7 +35,7 @@ func (api DynamoAPI) GetAuth(id string) (*models.User, error) {
 		return nil, nil
 	} else {
 		// Found a user, unmarshal into user object
-		err := dynamodbattribute.UnmarshalMap(result.Item, &user)
+		err := attributevalue.UnmarshalMap(result.Item, &user)
 		if err != nil {
 			return nil, err
 		}
@@ -41,15 +46,17 @@ func (api DynamoAPI) GetAuth(id string) (*models.User, error) {
 
 // GetGroup : Fetch a group from the collection
 // Responses:
-//  - nil, nil: group does not exist
-//  - nil, error: error while fetching group
-//  - user, nil: found group
+//   - nil, nil: group does not exist
+//   - nil, error: error while fetching group
+//   - user, nil: found group
 func (api DynamoAPI) GetGroup(id string) (*models.Group, error) {
 	group := &models.Group{ID: id}
-	result, err := api.Client.GetItem(&dynamodb.GetItemInput{
+	result, err := api.Client.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: aws.String(api.Config.GroupTable),
-		Key: map[string]*dynamodb.AttributeValue{
-			"group_id": {S: aws.String(id)},
+		Key: map[string]types.AttributeValue{
+			"group_id": &types.AttributeValueMemberS{
+				Value: id,
+			},
 		},
 	})
 	if err != nil {
@@ -59,7 +66,7 @@ func (api DynamoAPI) GetGroup(id string) (*models.Group, error) {
 		return nil, nil
 	} else {
 		// Found group, unmarshal into group object
-		err := dynamodbattribute.UnmarshalMap(result.Item, &group)
+		err := attributevalue.UnmarshalMap(result.Item, &group)
 		if err != nil {
 			return nil, err
 		}
@@ -93,28 +100,22 @@ func (api DynamoAPI) GetEntitlements(entitlementIDs []string) ([]models.User, er
 
 	// Scan for the entitlement ids
 	var entitlements []models.User
-	var lastErr error
-	err = api.Client.ScanPages(input,
-		func(page *dynamodb.ScanOutput, lastPage bool) bool {
-			// Unmarshal data into Record model
-			var records []models.User
-			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &records)
-			if err != nil {
-				lastErr = err
-				return false
-			}
+	paginator := dynamodb.NewScanPaginator(api.Client, input)
 
-			// Append records to entitlements
-			entitlements = append(entitlements, records...)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return nil, err
+		}
 
-			return true
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if lastErr != nil {
-		return nil, lastErr
+		// Unmarshal data into User model
+		records := []models.User{}
+		if err := attributevalue.UnmarshalListOfMaps(page.Items, &records); err != nil {
+			return nil, err
+		}
+
+		// Append records to results
+		entitlements = append(entitlements, records...)
 	}
 
 	return entitlements, nil

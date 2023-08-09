@@ -1,10 +1,13 @@
 package aws
 
 import (
+	"context"
+
 	"github.com/MichaelPalmer1/scoutr-go/models"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -20,7 +23,7 @@ func (api DynamoAPI) Get(req models.Request, id string) (models.Record, error) {
 	}
 
 	// Lookup the partition key
-	tableInfo, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
+	tableInfo, err := api.Client.DescribeTable(context.TODO(), &dynamodb.DescribeTableInput{
 		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
@@ -30,7 +33,7 @@ func (api DynamoAPI) Get(req models.Request, id string) (models.Record, error) {
 
 	// Get partition key
 	for _, schema := range tableInfo.Table.KeySchema {
-		if *schema.KeyType == "HASH" {
+		if schema.KeyType == types.KeyTypeHash {
 			partitionKey = *schema.AttributeName
 			break
 		}

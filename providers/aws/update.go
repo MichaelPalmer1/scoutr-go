@@ -1,12 +1,17 @@
 package aws
 
 import (
+	"context"
+	"errors"
+
 	"github.com/MichaelPalmer1/scoutr-go/models"
 	"github.com/MichaelPalmer1/scoutr-go/providers/base"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/smithy-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -46,11 +51,11 @@ func (api DynamoAPI) Update(req models.Request, partitionKey map[string]string, 
 	// Build input
 	input := dynamodb.UpdateItemInput{
 		TableName:    aws.String(api.Config.DataTable),
-		ReturnValues: aws.String("ALL_NEW"),
+		ReturnValues: types.ReturnValueAllNew,
 	}
 
 	// Build partition key
-	dynamoKeyParts, err := dynamodbattribute.MarshalMap(partitionKey)
+	dynamoKeyParts, err := attributevalue.MarshalMap(partitionKey)
 	if err != nil {
 		log.Errorln("Failed to marshal partition key", err)
 		return nil, err
@@ -66,7 +71,7 @@ func (api DynamoAPI) Update(req models.Request, partitionKey map[string]string, 
 	}
 
 	// Get key schema
-	keySchema, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
+	keySchema, err := api.Client.DescribeTable(context.TODO(), &dynamodb.DescribeTableInput{
 		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
@@ -104,12 +109,13 @@ func (api DynamoAPI) Update(req models.Request, partitionKey map[string]string, 
 	input.ExpressionAttributeValues = expr.Values()
 
 	// Update the item in dynamo
-	updatedItem, err := api.Client.UpdateItem(&input)
+	updatedItem, err := api.Client.UpdateItem(context.TODO(), &input)
 	if err != nil {
 		log.Errorln("Error while attempting to update item in dynamo", err)
 
 		// Check if this was a conditional check failure
-		if _, ok := err.(*dynamodb.ConditionalCheckFailedException); ok {
+		var apiError smithy.APIError
+		if errors.As(err, &apiError) && apiError.ErrorCode() == "ConditionalCheckFailedException" {
 			return nil, &models.BadRequest{
 				Message: "Item does not exist or you do not have permission to update it",
 			}
@@ -119,7 +125,7 @@ func (api DynamoAPI) Update(req models.Request, partitionKey map[string]string, 
 	}
 
 	// Unmarshal into output interface
-	err = dynamodbattribute.UnmarshalMap(updatedItem.Attributes, &output)
+	err = attributevalue.UnmarshalMap(updatedItem.Attributes, &output)
 	if err != nil {
 		return nil, err
 	}

@@ -1,12 +1,17 @@
 package aws
 
 import (
+	"context"
+	"errors"
+
 	"github.com/MichaelPalmer1/scoutr-go/models"
 	"github.com/MichaelPalmer1/scoutr-go/providers/base"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/smithy-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,11 +27,11 @@ func (api DynamoAPI) Delete(req models.Request, partitionKey map[string]string) 
 	// Build input
 	input := dynamodb.DeleteItemInput{
 		TableName:    aws.String(api.Config.DataTable),
-		ReturnValues: aws.String("ALL_OLD"),
+		ReturnValues: types.ReturnValueAllOld,
 	}
 
 	// Build partition key
-	dynamoKeyParts, err := dynamodbattribute.MarshalMap(partitionKey)
+	dynamoKeyParts, err := attributevalue.MarshalMap(partitionKey)
 	if err != nil {
 		log.Errorln("Failed to marshal partition key", err)
 		return err
@@ -42,7 +47,7 @@ func (api DynamoAPI) Delete(req models.Request, partitionKey map[string]string) 
 	}
 
 	// Get key schema
-	keySchema, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
+	keySchema, err := api.Client.DescribeTable(context.TODO(), &dynamodb.DescribeTableInput{
 		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
@@ -70,12 +75,13 @@ func (api DynamoAPI) Delete(req models.Request, partitionKey map[string]string) 
 	}
 
 	// Delete the item from dynamo
-	_, err = api.Client.DeleteItem(&input)
+	_, err = api.Client.DeleteItem(context.TODO(), &input)
 	if err != nil {
 		log.Errorln("Error while attempting to delete item in dynamo", err)
 
 		// Check if this was a conditional check failure
-		if _, ok := err.(*dynamodb.ConditionalCheckFailedException); ok {
+		var apiError smithy.APIError
+		if errors.As(err, &apiError) && apiError.ErrorCode() == "ConditionalCheckFailedException" {
 			return &models.BadRequest{
 				Message: "Item does not exist or you do not have permission to delete it",
 			}

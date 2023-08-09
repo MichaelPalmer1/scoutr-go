@@ -10,6 +10,7 @@ import (
 	dynamo "github.com/MichaelPalmer1/scoutr-go/providers/aws"
 	"github.com/MichaelPalmer1/scoutr-go/providers/base"
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -47,7 +48,7 @@ func InitAPIGateway(event events.APIGatewayProxyRequest, config config.Config) (
 		},
 	}
 
-	api.Init(nil)
+	api.Init(*aws.NewConfig())
 
 	return api, request
 }

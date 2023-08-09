@@ -1,25 +1,25 @@
 package aws
 
 import (
+	"context"
+
 	"github.com/MichaelPalmer1/scoutr-go/models"
 	"github.com/MichaelPalmer1/scoutr-go/providers/base"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
 // DynamoAPI : API, based off of Scoutr, used to talk to AWS DynamoDB
 type DynamoAPI struct {
 	*base.Scoutr
-	Client    *dynamodb.DynamoDB
+	Client    *dynamodb.Client
 	Filtering DynamoFiltering
 }
 
 // Init : Initialize the Dynamo client
-func (api *DynamoAPI) Init(config *aws.Config) {
-	sess := session.Must(session.NewSession(config))
-	api.Client = dynamodb.New(sess)
+func (api *DynamoAPI) Init(config aws.Config) {
+	api.Client = dynamodb.NewFromConfig(config)
 	f := DynamoFiltering{}
 	f.Filtering = &base.Filtering{
 		FilterBase:    &f,
@@ -29,66 +29,54 @@ func (api *DynamoAPI) Init(config *aws.Config) {
 	api.ScoutrBase = api
 }
 
-func scan(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.Record, error) {
+func scan(input *dynamodb.ScanInput, client *dynamodb.Client) ([]models.Record, error) {
 	results := []models.Record{}
-	var lastErr error
-	err := client.ScanPages(input,
-		func(page *dynamodb.ScanOutput, lastPage bool) bool {
-			// Unmarshal data into Record model
-			records := []models.Record{}
-			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &records)
-			if err != nil {
-				lastErr = err
-				return false
-			}
+	paginator := dynamodb.NewScanPaginator(client, input)
 
-			// Append records to results
-			results = append(results, records...)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return nil, err
+		}
 
-			return true
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if lastErr != nil {
-		return nil, lastErr
+		// Unmarshal data into Record model
+		records := []models.Record{}
+		if err := attributevalue.UnmarshalListOfMaps(page.Items, &records); err != nil {
+			return nil, err
+		}
+
+		// Append records to results
+		results = append(results, records...)
 	}
 
 	return results, nil
 }
 
-func scanAudit(input *dynamodb.ScanInput, client *dynamodb.DynamoDB) ([]models.AuditLog, error) {
+func scanAudit(input *dynamodb.ScanInput, client *dynamodb.Client) ([]models.AuditLog, error) {
 	results := []models.AuditLog{}
-	var lastErr error
-	err := client.ScanPages(input,
-		func(page *dynamodb.ScanOutput, lastPage bool) bool {
-			// Unmarshal data into AuditLog model
-			records := []models.AuditLog{}
-			err := dynamodbattribute.UnmarshalListOfMaps(page.Items, &records)
-			if err != nil {
-				lastErr = err
-				return false
-			}
+	paginator := dynamodb.NewScanPaginator(client, input)
 
-			// Append records to results
-			results = append(results, records...)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return nil, err
+		}
 
-			return true
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if lastErr != nil {
-		return nil, lastErr
+		// Unmarshal data into AuditLog model
+		records := []models.AuditLog{}
+		if err := attributevalue.UnmarshalListOfMaps(page.Items, &records); err != nil {
+			return nil, err
+		}
+
+		// Append records to results
+		results = append(results, records...)
 	}
 
 	return results, nil
 }
 
 func (api *DynamoAPI) storeItem(table string, item map[string]interface{}) error {
-	av, err := dynamodbattribute.MarshalMap(item)
+	av, err := attributevalue.MarshalMap(item)
 	if err != nil {
 		return err
 	}
@@ -98,7 +86,7 @@ func (api *DynamoAPI) storeItem(table string, item map[string]interface{}) error
 		Item:      av,
 	}
 
-	_, err = api.Client.PutItem(input)
+	_, err = api.Client.PutItem(context.TODO(), input)
 	if err != nil {
 		return err
 	}

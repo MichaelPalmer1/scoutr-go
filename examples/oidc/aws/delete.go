@@ -1,13 +1,15 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/MichaelPalmer1/scoutr-go/helpers"
 	"github.com/MichaelPalmer1/scoutr-go/models"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -25,7 +27,7 @@ func delete(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	}
 
 	// Get key schema
-	tableInfo, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
+	tableInfo, err := api.Client.DescribeTable(context.TODO(), &dynamodb.DescribeTableInput{
 		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
@@ -37,7 +39,7 @@ func delete(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	// Build partition key
 	partitionKey := make(map[string]string)
 	for _, schema := range tableInfo.Table.KeySchema {
-		if *schema.KeyType == "HASH" {
+		if schema.KeyType == types.KeyTypeHash {
 			partitionKey[*schema.AttributeName] = params.ByName("id")
 			break
 		}

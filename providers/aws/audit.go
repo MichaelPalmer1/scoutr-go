@@ -1,14 +1,15 @@
 package aws
 
 import (
+	"context"
 	"sort"
 	"time"
 
 	"github.com/MichaelPalmer1/scoutr-go/models"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -126,7 +127,7 @@ func (api DynamoAPI) auditLog(action string, request models.Request, user models
 	}
 
 	// Marshal the audit log to Dynamo format
-	item, err := dynamodbattribute.MarshalMap(auditLog)
+	item, err := attributevalue.MarshalMap(auditLog)
 	if err != nil {
 		log.Errorln("Failed to marshal the audit log", err)
 		log.Infof("Failed audit log: '%v'", auditLog)
@@ -140,7 +141,7 @@ func (api DynamoAPI) auditLog(action string, request models.Request, user models
 	}
 
 	// Add the record to dynamo
-	_, err = api.Client.PutItem(&input)
+	_, err = api.Client.PutItem(context.TODO(), &input)
 	if err != nil {
 		log.Errorln("Failed to put audit log in Dynamo", err)
 		log.Infof("Failed audit log: '%v'", auditLog)

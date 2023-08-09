@@ -1,12 +1,17 @@
 package aws
 
 import (
+	"context"
+	"errors"
+
 	"github.com/MichaelPalmer1/scoutr-go/models"
 	"github.com/MichaelPalmer1/scoutr-go/providers/base"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/smithy-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,7 +27,7 @@ func (api DynamoAPI) Create(req models.Request, item map[string]interface{}, val
 	}
 
 	// Get key schema
-	output, err := api.Client.DescribeTable(&dynamodb.DescribeTableInput{
+	output, err := api.Client.DescribeTable(context.TODO(), &dynamodb.DescribeTableInput{
 		TableName: aws.String(api.Config.DataTable),
 	})
 	if err != nil {
@@ -33,14 +38,14 @@ func (api DynamoAPI) Create(req models.Request, item map[string]interface{}, val
 	// Append key schema conditions
 	partitionKey := ""
 	for _, schema := range output.Table.KeySchema {
-		if *schema.KeyType == "HASH" {
+		if schema.KeyType == types.KeyTypeHash {
 			partitionKey = *schema.AttributeName
 		}
 		conditions = api.Filtering.And(conditions, expression.Name(*schema.AttributeName).AttributeNotExists())
 	}
 
 	// Marshal item into a dynamo map
-	data, err := dynamodbattribute.MarshalMap(item)
+	data, err := attributevalue.MarshalMap(item)
 	if err != nil {
 		log.Errorln("Failed to marshal data", err)
 		return err
@@ -63,12 +68,13 @@ func (api DynamoAPI) Create(req models.Request, item map[string]interface{}, val
 	}
 
 	// Put the item into the table
-	_, err = api.Client.PutItem(&input)
+	_, err = api.Client.PutItem(context.TODO(), &input)
 	if err != nil {
 		log.WithError(err).Errorln("Encountered error while attempting to create record")
 
 		// Check if this was a conditional check failure
-		if _, ok := err.(*dynamodb.ConditionalCheckFailedException); ok {
+		var apiError smithy.APIError
+		if errors.As(err, &apiError) && apiError.ErrorCode() == "ConditionalCheckFailedException" {
 			return &models.BadRequest{
 				Message: "Item already exists or you do not have permission to create it",
 			}
