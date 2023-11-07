@@ -12,4 +12,4 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-Contact github@michaeldpalmer.com with vulnerability information.
+[Report a vulnerability](https://github.com/MichaelPalmer1/scoutr-go/security/advisories/new) with vulnerability information.
