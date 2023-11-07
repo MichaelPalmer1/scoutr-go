@@ -1,0 +1,57 @@
+openapi: '3.0.2'
+info:
+  title: Scoutr
+  version: '1.0'
+paths:
+  /items:
+    get:
+      responses:
+        '200':
+          description: OK
+
+  /search/{key}:
+    parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      requestBody:
+        content:
+          application/json:
+            example:
+              - item1
+              - item2
+      responses:
+        '200':
+          description: OK
+
+  /item:
+    get:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                key: value
+    post:
+      responses:
+        '200':
+          description: OK
+    
+    put:
+      responses:
+        '200':
+          description: OK
+    
+    patch:
+      requestBody:
+        content:
+          application/json:
+            example:
+              key: value
+      responses:
+        '200':
+          description: OK

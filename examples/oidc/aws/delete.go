@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/MichaelPalmer1/scoutr-go/helpers"
-	"github.com/MichaelPalmer1/scoutr-go/models"
+	"github.com/MichaelPalmer1/scoutr-go/pkg/helpers"
+	"github.com/MichaelPalmer1/scoutr-go/pkg/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	dynamoTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
@@ -18,7 +18,7 @@ func delete(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	requestUser := helpers.GetUserFromOIDC(req, api)
 
 	// Build the request model
-	request := models.Request{
+	request := types.Request{
 		User:      requestUser,
 		Method:    req.Method,
 		Path:      req.URL.Path,
@@ -37,9 +37,9 @@ func delete(w http.ResponseWriter, req *http.Request, params httprouter.Params) 
 	}
 
 	// Build partition key
-	partitionKey := make(map[string]string)
+	partitionKey := make(map[string]interface{})
 	for _, schema := range tableInfo.Table.KeySchema {
-		if schema.KeyType == types.KeyTypeHash {
+		if schema.KeyType == dynamoTypes.KeyTypeHash {
 			partitionKey[*schema.AttributeName] = params.ByName("id")
 			break
 		}

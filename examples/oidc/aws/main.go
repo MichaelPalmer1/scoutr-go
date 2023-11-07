@@ -5,59 +5,45 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/MichaelPalmer1/scoutr-go/config"
-	"github.com/MichaelPalmer1/scoutr-go/helpers"
-	dynamo "github.com/MichaelPalmer1/scoutr-go/providers/aws"
-	"github.com/MichaelPalmer1/scoutr-go/providers/base"
+	scoutrConfig "github.com/MichaelPalmer1/scoutr-go/pkg/config"
+	"github.com/MichaelPalmer1/scoutr-go/pkg/helpers"
+	dynamo "github.com/MichaelPalmer1/scoutr-go/pkg/providers/aws"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	log "github.com/sirupsen/logrus"
 )
 
-func init() {
-	api = dynamo.DynamoAPI{
-		Scoutr: &base.Scoutr{
-			Config: config.Config{},
-		},
-		//Filtering: dynamo.DynamoFiltering{},
-	}
-}
-
 func main() {
 	// Command line arguments
 	var nameHeader string
-	flag.StringVar(&api.Config.DataTable, "data-table", "", "Data table")
-	flag.StringVar(&api.Config.AuthTable, "auth-table", "", "Auth table")
-	flag.StringVar(&api.Config.GroupTable, "group-table", "", "Group table")
-	flag.StringVar(&api.Config.AuditTable, "audit-table", "", "Audit table")
-	flag.IntVar(&api.Config.LogRetentionDays, "log-retention-days", 30, "Days to retain read logs")
-	flag.StringVar(&api.Config.OIDCUsernameHeader, "oidc-username-header", "Oidc-Claim-Sub", "Username header from OIDC")
+	var conf scoutrConfig.Config
+
+	flag.StringVar(&conf.DataTable, "data-table", "", "Data table")
+	flag.StringVar(&conf.AuthTable, "auth-table", "", "Auth table")
+	flag.StringVar(&conf.GroupTable, "group-table", "", "Group table")
+	flag.StringVar(&conf.AuditTable, "audit-table", "", "Audit table")
+	flag.IntVar(&conf.LogRetentionDays, "log-retention-days", 30, "Days to retain read logs")
+	flag.StringVar(&conf.OIDCUsernameHeader, "oidc-username-header", "Oidc-Claim-Sub", "Username header from OIDC")
 	flag.StringVar(&nameHeader, "oidc-name-header", "Oidc-Claim-Name", "Name header from OIDC")
-	flag.StringVar(&api.Config.OIDCEmailHeader, "oidc-email-header", "Oidc-Claim-Mail", "Email header from OIDC")
-	flag.StringVar(&api.Config.OIDCGroupHeader, "oidc-group-header", "", "Group header from OIDC")
+	flag.StringVar(&conf.OIDCEmailHeader, "oidc-email-header", "Oidc-Claim-Mail", "Email header from OIDC")
+	flag.StringVar(&conf.OIDCGroupHeader, "oidc-group-header", "", "Group header from OIDC")
 	flag.Parse()
 
-	api.Config.OIDCNameHeader = strings.Split(nameHeader, ",")
+	conf.OIDCNameHeader = strings.Split(nameHeader, ",")
 
 	// Make sure required fields are provided
-	if api.Config.DataTable == "" {
+	if conf.DataTable == "" {
 		log.Fatalln("data-table argument is required")
 	}
-	if api.Config.AuthTable == "" {
+	if conf.AuthTable == "" {
 		log.Fatalln("auth-table argument is required")
 	}
-	if api.Config.GroupTable == "" {
+	if conf.GroupTable == "" {
 		log.Fatalln("group-table argument is required")
 	}
 
-	// creds := credentials.NewChainCredentials([]credentials.Provider{
-	// 	&credentials.EnvProvider{},
-	// 	//&ec2rolecreds.EC2RoleProvider{
-	// 	//	Client: ec2metadata.New(session.Must(session.NewSession())),
-	// 	//},
-	// 	&credentials.SharedCredentialsProvider{},
-	// })
-
-	api.Init(*aws.NewConfig())
+	awsConfig := aws.NewConfig()
+	awsConfig.Region = "us-east-1"
+	api := dynamo.NewDynamoAPI(conf, *awsConfig)
 
 	// Initialize http server
 	router, err := helpers.InitHTTPServer(api, "/items/")
