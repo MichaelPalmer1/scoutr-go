@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/aws/aws-lambda-go v1.41.0
-	github.com/aws/aws-sdk-go-v2 v1.22.1
+	github.com/aws/aws-sdk-go-v2 v1.22.2
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.0
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.6.0
 	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.31.0
