@@ -1,7 +1,7 @@
 github.com/aws/aws-lambda-go v1.41.0 h1:l/5fyVb6Ud9uYd411xdHZzSf2n86TakxzpvIoz7l+3Y=
 github.com/aws/aws-lambda-go v1.41.0/go.mod h1:jwFe2KmMsHmffA1X2R09hH6lFzJQxzI8qK17ewzbQMM=
-github.com/aws/aws-sdk-go-v2 v1.23.0 h1:PiHAzmiQQr6JULBUdvR8fKlA+UPKLT/8KbiqpFBWiAo=
-github.com/aws/aws-sdk-go-v2 v1.23.0/go.mod h1:i1XDttT4rnf6vxc9AuskLc6s7XBee8rlLilKlc03uAA=
+github.com/aws/aws-sdk-go-v2 v1.23.1 h1:qXaFsOOMA+HsZtX8WoCa+gJnbyW7qyFFBlPqvTSzbaI=
+github.com/aws/aws-sdk-go-v2 v1.23.1/go.mod h1:i1XDttT4rnf6vxc9AuskLc6s7XBee8rlLilKlc03uAA=
 github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.2 h1:nSLn/e6Ps+ToDP35bJtUlc4Px9sKAi4F+CP75SpfSEQ=
 github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.2/go.mod h1:RkDSbtOlg1ATm+iES2M5/MF6Q2AMEfJ59W5PLGGhLs8=
 github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.6.2 h1:y//hbg1ESmpc6fM7HUIRtWQffqQS1xxhNtQ+EbA+rFE=
