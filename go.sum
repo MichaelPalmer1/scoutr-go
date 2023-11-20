@@ -10,8 +10,8 @@ github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.4 h1:LAm3Ycm9HJfbSCd5I+
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.4/go.mod h1:xEhvbJcyUf/31yfGSQBe01fukXwXJ0gxDp7rLfymWE0=
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.4 h1:4GV0kKZzUxiWxSVpn/9gwR0g21NF1Jsyduzo9rHgC/Q=
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.4/go.mod h1:dYvTNAggxDZy6y1AF7YDwXsPuHFy/VNEpEI/2dWK9IU=
-github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.33.0 h1:X6XBuklzVI3VFiTuChGv+NNMUMKQIaBSUmkU6O1FrcM=
-github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.33.0/go.mod h1:yLuXsilN12lh4QXg3fr/tGGOzO52PxmLPeBY/ekiI7g=
+github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.33.1 h1:MKXAR/iX7gsGT0QCHAvJXfjUK59T2G23IJHb0q8Rb8g=
+github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.33.1/go.mod h1:fdOGahYloDvaLq9YhUpefHsAfJrkjsHk3c0YhAvvWwI=
 github.com/aws/aws-sdk-go-v2/service/cloudtraildata v1.4.2 h1:jnn5cJ7L7O1GutLJYxKigE+kc0MvQKjJI0Dzo9jC9uQ=
 github.com/aws/aws-sdk-go-v2/service/cloudtraildata v1.4.2/go.mod h1:dW05ivI1EZv2250mU0uu1sP67/HwMCGxz1Jd4G9ff6E=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.25.3 h1:f5MV/o9V143ZKOxDh/+LLcufe4F8B3gdfg4c5Nwasyg=
