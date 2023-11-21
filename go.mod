@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-lambda-go v1.41.0
 	github.com/aws/aws-sdk-go-v2 v1.23.1
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.3
-	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.6.2
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.6.3
 	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.33.1
 	github.com/aws/aws-sdk-go-v2/service/cloudtraildata v1.4.3
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.25.3
