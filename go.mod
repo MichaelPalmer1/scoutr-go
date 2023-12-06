@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.23.5
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.9
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.6.9
-	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.35.2
+	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.35.3
 	github.com/aws/aws-sdk-go-v2/service/cloudtraildata v1.5.2
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.26.3
 	github.com/aws/smithy-go v1.18.1
