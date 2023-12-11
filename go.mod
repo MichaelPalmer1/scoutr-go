@@ -3,7 +3,7 @@ module github.com/MichaelPalmer1/scoutr-go
 go 1.20
 
 require (
-	github.com/aws/aws-lambda-go v1.41.0
+	github.com/aws/aws-lambda-go v1.42.0
 	github.com/aws/aws-sdk-go-v2 v1.24.0
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.12
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.6.12
