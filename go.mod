@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.6.16
 	github.com/aws/aws-sdk-go-v2/service/cloudtrail v1.36.0
 	github.com/aws/aws-sdk-go-v2/service/cloudtraildata v1.5.5
-	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.27.0
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.27.1
 	github.com/aws/smithy-go v1.19.0
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/julienschmidt/httprouter v1.3.0
